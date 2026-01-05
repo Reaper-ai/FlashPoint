@@ -15,3 +15,4 @@ watchdog        # Helps Streamlit reload faster
 # Environment
 python-dotenv   # To manage API Keys securely
 openai          # Standard OpenAI library
+cryptg

@@ -1,23 +1,39 @@
+# version: '3.8'
+
+# services:
+#   backend:
+#     build: ./backend
+#     container_name: flashpoint-core
+#     ports:
+#       - "8000:8000"  # Pathway API exposed here
+#     env_file: .env
+#     volumes:
+#       - ./backend:/app  # Live reload for development
+#       - ./data:/app/data
+
+#   frontend:
+#     build: ./frontend
+#     container_name: flashpoint-ui
+#     ports:
+#       - "8501:8501"  # Streamlit UI exposed here
+#     env_file: .env
+#     depends_on:
+#       - backend
+#     volumes:
+#       - ./frontend:/app # Live reload
 version: '3.8'
 
 services:
-  backend:
+  # The Pathway Backend
+  flashpoint-engine:
     build: ./backend
-    container_name: flashpoint-core
-    ports:
-      - "8000:8000"  # Pathway API exposed here
-    env_file: .env
+    container_name: flashpoint_backend
     volumes:
-      - ./backend:/app  # Live reload for development
-      - ./data:/app/data
+      - ./backend:/app  # <--- MAGIC LINE: Lets you edit code on Windows and see changes in Docker instantly
+    env_file:
+      - .env.example
+    # Python buffers stdout, so this ensures logs show up immediately
+    environment:
+      - PYTHONUNBUFFERED=1
 
-  frontend:
-    build: ./frontend
-    container_name: flashpoint-ui
-    ports:
-      - "8501:8501"  # Streamlit UI exposed here
-    env_file: .env
-    depends_on:
-      - backend
-    volumes:
-      - ./frontend:/app # Live reload
+  # We will add the frontend later...

@@ -6,6 +6,7 @@ telethon        # For Telegram
 praw            # For Reddit
 requests        # For GNews/RSS
 beautifulsoup4  # If you need to clean up HTML text
+feedparser
 
 # Frontend
 streamlit       # For the Dashboard

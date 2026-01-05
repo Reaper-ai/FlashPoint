@@ -1,11 +1,11 @@
-# from connectors.sim_src import SimulationSource
-# from connectors.news_src import NewsSource, RssSource
 import pathway as pw
-from connectors.telegram_src import TelegramSource  # Import the Class
+from connectors.telegram_src import TelegramSource
+from connectors.reddit_src import RedditSource
 
 def run():
-    print("🚀 Flashpoint Engine Starting...")
+    print("🚀 Flashpoint Engine Starting (Multi-Source Mode)...")
 
+    # 1. Define the Unified Schema
     class InputSchema(pw.Schema):
         source: str
         author: str
@@ -14,18 +14,32 @@ def run():
         raw_timestamp: float
         ingested_at: str
 
-    # --- THE FIX ---
-    # Instantiate the class: TelegramSource()
-    # This creates the object Pathway expects.
+    # 2. Connect Telegram
     telegram_table = pw.io.python.read(
-        TelegramSource(), 
+        TelegramSource(),
         schema=InputSchema,
         mode="streaming"
     )
 
-    pw.io.csv.write(telegram_table, "output_telegram.csv")
+    # 3. Connect Reddit
+    reddit_table = pw.io.python.read(
+        RedditSource(),
+        schema=InputSchema,
+        mode="streaming"
+    )
 
-    print("✅ Pipeline configured.")
+    # --- THE FIX ---
+    # We explicitly promise Pathway that Reddit and Telegram are separate streams.
+    # This satisfies the "disjoint" requirement.
+    reddit_table = reddit_table.promise_universes_are_disjoint(telegram_table)
+
+    # 4. Now we can Concatenate safely
+    unified_table = telegram_table.concat(reddit_table)
+
+    # 5. Output to CSV (Backend Verification)
+    pw.io.csv.write(unified_table, "output_unified.csv")
+
+    print("✅ Pipeline configured. Listening to World News & Telegram Channels...")
     pw.run()
 
 if __name__ == "__main__":

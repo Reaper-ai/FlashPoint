@@ -2,10 +2,7 @@ import pathway as pw
 import json
 import time
 import os
-import logging
-
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+from utils.logger import logger
 
 class SimulationSource(pw.io.InputConnector):
     """

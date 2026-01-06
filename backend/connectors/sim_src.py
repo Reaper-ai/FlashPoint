@@ -2,43 +2,44 @@ import pathway as pw
 import json
 import time
 import os
-from utils.logger import logger
 
-class SimulationSource(pw.io.InputConnector):
-    """
-    Reads a JSONL file line-by-line with a delay to mimic a live stream.
-    Updates the timestamp to current time so the AI treats it as 'Fresh'.
-    """
-    
+class SimulationSource(pw.io.python.ConnectorSubject):
     def __init__(self, file_path, interval=5):
-        # interval = seconds between events (set to 5 for a fast demo)
+        # 1. CRITICAL: Must initialize the parent class
+        super().__init__()
         self.file_path = file_path
         self.interval = interval
 
-    def read(self):
-        # Check if file exists
+    def run(self):
+        # 2. Check path
         if not os.path.exists(self.file_path):
-            logger.warning(f"⚠️ Simulation file not found: {self.file_path}")
+            print(f"❌ [Sim] File not found: {self.file_path}")
             return
 
-        logger.info(f"Starting Simulation Stream from {self.file_path}...")
+        print(f"🚀 [Sim] Starting Simulation Loop from: {self.file_path}")
         
-        with open(self.file_path, "r") as f:
-            for line in f:
-                if line.strip():
-                    try:
-                        data = json.loads(line)
-                        
-                        # CRITICAL: Overwrite timestamp to NOW
-                        # This ensures the AI thinks the event just happened.
-                        data["timestamp"] = time.time()
-                        
-                        yield data
-                        
-                        # Sleep to simulate "Live Reporting" cadence
-                        time.sleep(self.interval)
-                        
-                    except json.JSONDecodeError:
-                        continue
-        
-        logger.info("✅ Simulation Stream Finished.")
+        # 3. Infinite Loop
+        while True:
+            try:
+                with open(self.file_path, "r") as f:
+                    lines = f.readlines()
+
+                for line in lines:
+                    if line.strip():
+                        try:
+                            data = json.loads(line)
+                            
+                            # Update timestamp to NOW
+                            data["timestamp"] = time.time()
+                            
+                            # 4. Push data to Pathway engine
+                            self.next(**data)
+                            
+                            print(f"🎭 [Sim] Injected: {data.get('text', '')[:30]}...")
+                            time.sleep(self.interval)
+                            
+                        except json.JSONDecodeError:
+                            continue
+            except Exception as e:
+                print(f"⚠️ [Sim] Read Error: {e}")
+                time.sleep(1)

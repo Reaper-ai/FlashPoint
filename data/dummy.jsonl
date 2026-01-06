@@ -1,8 +1,8 @@
-{"text": "BREAKING: Large convoy of unidentified military vehicles spotted heading towards Border Region X.", "source": "Telegram/@insider_paper", "bias_tag": "Neutral/Raw"}
-{"text": "Local residents in Border Region X report hearing heavy artillery fire. Power outages confirmed.", "source": "Reddit/r/conflictnews", "bias_tag": "Human Intel"}
-{"text": "Defense Ministry announces 'Routine Training Exercises' near the border. Denies any aggressive intent.", "source": "TASS (State Media)", "bias_tag": "State-Media (RU)"}
-{"text": "US Satellite imagery confirms massive troop buildup. Pentagon warns of imminent incursion.", "source": "CNN Alert", "bias_tag": "Western/Global"}
-{"text": "URGENT: Bridge connecting the two regions has been destroyed. Civilians trapped.", "source": "Telegram/@geopolitics_live", "bias_tag": "Neutral/Raw"}
-{"text": "Foreign Ministry condemns 'Western hysteria' and provocation regarding border security measures.", "source": "Xinhua (State Media)", "bias_tag": "State-Media (CN)"}
-{"text": "Reports of cyberattacks hitting regional hospitals and infrastructure. Communications down.", "source": "Reddit/r/netsec", "bias_tag": "Human Intel"}
-{"text": "UN Security Council calls for emergency meeting regarding the escalation in Region X.", "source": "Reuters", "bias_tag": "Western/Global"}
+{"text": "BREAKING: Large convoy of unidentified military vehicles spotted heading towards Border Region X.", "source": "Simulation", "bias": "Neutral/Raw", "url": "susuus.com"}
+{"text": "Local residents in Border Region X report hearing heavy artillery fire. Power outages confirmed.", "source": "Simulation", "bias": "Human Intel", "url": "reddit.com"}
+{"text": "Defense Ministry announces 'Routine Training Exercises' near the border. Denies any aggressive intent.", "source": "Simulation", "bias": "State-Media (RU)", "url": "tass.com"}
+{"text": "US Satellite imagery confirms massive troop buildup. Pentagon warns of imminent incursion.", "source": "Simulation", "bias": "Western/Global", "url": "cnn.com"}
+{"text": "URGENT: Bridge connecting the two regions has been destroyed. Civilians trapped.", "source": "Simulation", "bias": "Neutral/Raw", "url": "telegram.com"}
+{"text": "Foreign Ministry condemns 'Western hysteria' and provocation regarding border security measures.", "source": "Simulation", "bias": "State-Media (CN)", "url": "xinhuanet.com"}
+{"text": "Reports of cyberattacks hitting regional hospitals and infrastructure. Communications down.", "source": "Simulation", "bias": "Human Intel", "url": "reddit.com"}
+{"text": "UN Security Council calls for emergency meeting regarding the escalation in Region X.", "source": "Simulation", "bias": "Western/Global", "url": "reuters.com"}

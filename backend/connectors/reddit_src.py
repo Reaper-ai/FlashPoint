@@ -55,13 +55,11 @@ class RedditSource(pw.io.python.ConnectorSubject):
 
 
                             # pathway easiness
-                            row={"source":"reddit",
-                                 "author": str(post.get('author')),
+                            row={"source":"Reddit",
                                  "text": full_text,
                                  "url": f"https://reddit.com{post.get('permalink')}",
-                                 "raw_timestamp": float(post.get('created_utc',0)),
-                                 "ingested_at":datetime.now().isoformat()
-                                 }
+                                 "timestamp": float(post.get('created_utc',0)),
+                                 "bias": "Varied/Unknown" }
                             # sending to engine 
                             self.next(**row)
                             print(f"👾 [Reddit] {title[:40]}...", flush=True)

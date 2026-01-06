@@ -1,19 +1,28 @@
-import os
 import asyncio
 import pathway as pw
-from datetime import datetime
 from telethon import TelegramClient, events
-from dotenv import load_dotenv
 
-# 1. Load Environment Variables
-load_dotenv()
 
-API_ID = os.getenv("TELEGRAM_API_ID")
-API_HASH = os.getenv("TELEGRAM_API_HASH")
-PHONE = os.getenv("TELEGRAM_PHONE")
+
 CHANNELS = ["intelslava", "insider_paper", "disclosetv"]
+tags = {
+    "intelslava": "Independent",
+    "insider_paper": "Independent",
+    "disclosetv": "Independent"
+}
+
 
 class TelegramSource(pw.io.python.ConnectorSubject):
+    def __init__(self, api_id, api_hash, phone, polling_interval=30):
+        super().__init__()
+        self.api_id = api_id
+        self.api_hash = api_hash
+        self.phone = phone
+        self.polling_interval = polling_interval
+        self.seen_messages = set()
+
+
+
     def run(self):
         """
         Main entry point for Pathway.
@@ -24,7 +33,7 @@ class TelegramSource(pw.io.python.ConnectorSubject):
 
         # 3. Initialize Client
         # IMPORTANT: We use 'session_flashpoint' to match the file you just created.
-        client = TelegramClient('session_flashpoint', API_ID, API_HASH)
+        client = TelegramClient('session_flashpoint', self.api_id, self.api_hash)
 
         # 4. Define Handler (For Live Data)
         @client.on(events.NewMessage(chats=CHANNELS))
@@ -33,11 +42,11 @@ class TelegramSource(pw.io.python.ConnectorSubject):
 
         # 5. Define Main Logic
         async def main_sequence():
-            print(f"🔌 [Telegram] Connecting using saved session for {PHONE}...")
+            print(f"🔌 [Telegram] Connecting using saved session for {self.phone}...")
             
             # Because you already logged in, this will verify the session file 
             # and connect IMMEDIATELY without asking for code/phone.
-            await client.start(phone=PHONE)
+            await client.start(phone=self.phone)
             
             print("✅ [Telegram] CONNECTED! (Session Valid)")
 
@@ -71,13 +80,11 @@ class TelegramSource(pw.io.python.ConnectorSubject):
         text_clean = str(event.text).replace('\n', ' ')[:60]
 
         row = {
-            "source": "telegram",
-            "author": str(username),
+            "source": "Telegram",
             "text": str(event.text),
             "url": f"https://t.me/{username}/{event.id}",
-            "raw_timestamp": float(event.date.timestamp()),
-            "ingested_at": datetime.now().isoformat()
-        }
+            "timestamp": float(event.date.timestamp()),
+            "bias": tags[username] }
         
         # Push to Pathway Engine
         self.next(**row)

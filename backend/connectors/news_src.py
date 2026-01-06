@@ -1,11 +1,8 @@
 import pathway as pw
 import requests
 import time
-import logging
+from utils.logger import logger
 import feedparser
-
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
 
 class NewsSource(pw.io.InputConnector):
     """
@@ -13,10 +10,10 @@ class NewsSource(pw.io.InputConnector):
     Falls back to a 'simulation' mode if the API quota is hit.
     """
     
-    def __init__(self, api_key, query="crisis OR war OR military", poll_interval=60):
+    def __init__(self, api_key, query="crisis OR war OR military", polling_interval=300):
         self.api_key = api_key
         self.query = query
-        self.poll_interval = poll_interval  # Seconds between polls
+        self.polling_interval = polling_interval  # Seconds between polls
         self.seen_articles = set() # Dedup filter
 
     def read(self):
@@ -62,7 +59,7 @@ class RssSource(pw.io.InputConnector):
     Reads from RSS feeds to get specific 'Eastern Bloc' narratives
     that might be missing from standard Western APIs.
     """
-    def __init__(self, url, bias_tag, polling_interval=300):
+    def __init__(self, url, bias_tag, polling_interval=250):
         self.url = url
         self.bias_tag = bias_tag  # e.g., "State-Media (RU)"
         self.polling_interval = polling_interval

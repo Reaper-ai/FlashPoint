@@ -1,10 +1,10 @@
 [theme]
 base="dark"
 
-primaryColor="#00ff41" # Matrix Green / Cyberpunk Neon
-backgroundColor="#0e1117" # Very dark grey background
-secondaryBackgroundColor="#262730" # Slightly lighter for sidebars
-textColor="#fafafa"
+primaryColor="#00e5ff"       # Cyan (Main Accent)
+backgroundColor="#0b0e11"    # Deep Gunmetal (Background)
+secondaryBackgroundColor="#151921" # Slightly lighter panel
+textColor="#e0e6ed"          # Off-white (easier on eyes than pure white)
 font="sans serif"
 
 [server]

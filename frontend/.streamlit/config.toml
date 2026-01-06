@@ -1,0 +1,11 @@
+[theme]
+base="dark"
+
+primaryColor="#00ff41" # Matrix Green / Cyberpunk Neon
+backgroundColor="#0e1117" # Very dark grey background
+secondaryBackgroundColor="#262730" # Slightly lighter for sidebars
+textColor="#fafafa"
+font="sans serif"
+
+[server]
+headless = true

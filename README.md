@@ -109,14 +109,14 @@ flashpoint/
 │   ├── connectors/        # Custom Python Connectors (Telegram/Reddit)
 │   ├── main.py            # Pipeline Logic
 │   ├── api.py             # Controlling api's
-│   ├── auth_telegram.py   #
+│   ├── auth_telegram.py   # Telegram authentication
 │   └── data_registry.py   # Data Registeration
 │   └── Dockerfile
 ├── frontend/              # Streamlit Dashboard
 │   ├── assets/            # Logo
 │   ├── dashboard.py       # UI Logic
+│   ├── report.py          # Pdf generation logic  
 │   └── Dockerfile
-│   ├── report.py  
 ├── docker-compose.yaml # Orchestration
 │   ├── requirements.txt
 └── README.md

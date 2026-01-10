@@ -52,7 +52,7 @@ The backend is exposed via a FastAPI service, enabling low-latency access to liv
 
 * Docker & Docker Compose
 * Telegram API ID/Hash (Get from my.telegram.org)
-* Reddit Client ID/Secret
+* Gemini & GNews API 
 
 ### Installation
 

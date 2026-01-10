@@ -83,7 +83,7 @@ def generate_report():
 
     # 2. Prompt for Report Format
 
-    context_text = "\n".join([f"- {d['text']}" for d in latest_news])
+    context_text = "\n".join([f"- {d['text']}-{d['source']}-{d['bias']}" for d in latest_news])
     prompt = f""" TASK: Synthesize the provided 'Raw Intel' into a professional News Briefing. 
         CONSTRAINTS:
         1. Use ONLY the provided text below. Do NOT fill in missing data like names, dates, or events not present.

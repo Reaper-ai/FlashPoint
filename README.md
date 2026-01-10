@@ -81,12 +81,9 @@ Run the entire stack (Backend + Frontend) with one command:
 ```bash
 docker-compose up --build
 ```
-
-
+authenticate your telegram credentials by entering your mobile number in international format and then entering the OTP received on telegram
 4. **Access the Dashboard**
-* **UI:** Open [http://localhost:8501](https://www.google.com/search?q=http://localhost:8501)
-* **Backend API:** [http://localhost:8000](https://www.google.com/search?q=http://localhost:8000)
-
+Open [http://localhost:8501](https://www.google.com/search?q=http://localhost:8501)
 
 
 ---

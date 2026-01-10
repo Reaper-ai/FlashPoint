@@ -84,17 +84,27 @@ def generate_report():
     # 2. Prompt for Report Format
 
     context_text = "\n".join([f"- {d['text']}" for d in latest_news])
-    prompt = f"""ROLE : "You are a senior intelligence analyst. Write a formal SITREP (Situation Report).
-        TOPIC: give summary of major key happenings around the world
-        
-        INTELLIGENCE DATA:
+    prompt = f""" TASK: Synthesize the provided 'Raw Intel' into a professional News Briefing. 
+        CONSTRAINTS:
+        1. Use ONLY the provided text below. Do NOT fill in missing data like names, dates, or events not present.
+        2. Tone: Objective, Journalistic, Concise.
+        3. Cite the source name in brackets [Source] for every claim.
+        4. Reply in plain text, do not give response in markdown
+    
+        RAW INTEL:
         {context_text}
-        
-        OUTPUT FORMAT:
-        1. EXECUTIVE SUMMARY
-        2. KEY EVENTS
-        4. FORECAST
-        """
+    
+        REQUIRED OUTPUT FORMAT:
+        ##  Global Situation Summary
+        [Write a 2-3 sentence executive summary of the provided text]
+
+        ## Key Developments
+        - **[Category/Region]**: [Detail] [Source]
+        - **[Category/Region]**: [Detail] [Source]
+    
+        ## Outlook
+        [Short forecast based *only* on the provided trends]
+    """
     
     # 3. Generate
     response = gemini_model.generate_content(prompt)

@@ -20,11 +20,6 @@ def create_pdf(report_text, ):
     pdf.add_page()
     pdf.set_font("Arial", size=11)
     
-    # Title
-    pdf.set_font("Arial", 'B', 12)
-    pdf.cell(0, 10, f"Summary Report", 0, 1, 'L')
-    pdf.ln(5)
-    
     # Body
     pdf.set_font("Arial", size=11)
     # multi_cell handles line wrapping automatically

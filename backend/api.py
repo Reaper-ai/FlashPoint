@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 """FastAPI Backend Service for FlashPoint Intelligence Engine
 
 Responsibilities:
@@ -9,9 +8,7 @@ Responsibilities:
 """
 
 from fastapi import FastAPI, Request
-=======
-from fastapi import FastAPI
->>>>>>> a984c70811017dafea27637922b08cfdb71f385b
+
 import uvicorn
 from typing import Dict, Any
 from collections import deque
@@ -133,10 +130,11 @@ def get_feed():
 # ========== INTELLIGENCE REPORT GENERATION ==========
 @app.get("/v1/generate_report")
 def generate_report():
-<<<<<<< HEAD
-    """Generate formal intelligence briefing from event stream
-=======
-    """Generates a formal intelligence briefing on a topic."""
+    """Generates a formal intelligence briefing on a topic.
+
+    Returns:
+        dict: {"report": str} - Formatted SITREP from LLM
+    """
 
     # 2. Prompt for Report Format
 
@@ -162,32 +160,6 @@ def generate_report():
         ## Outlook
         [Short forecast based *only* on the provided trends]
     """
->>>>>>> a984c70811017dafea27637922b08cfdb71f385b
-    
-    Process:
-    1. Extract textual content from all buffered events
-    2. Construct system prompt for SITREP generation
-    3. Query Gemini with context and structured output request
-    4. Return formatted briefing (Executive Summary, Key Events, Forecast)
-    
-    Returns:
-        dict: {"report": str} - Formatted SITREP from LLM
-    """
-    # Combine all event texts into context block for LLM
-    context_text = "\n".join([f"- {d['text']}" for d in latest_news])
-    
-    # Construct prompt with role, context, and output format specification
-    prompt = f"""ROLE: "You are a senior intelligence analyst. Write a formal SITREP (Situation Report).
-TOPIC: Give summary of major key happenings around the world
-
-INTELLIGENCE DATA:
-{context_text}
-
-OUTPUT FORMAT:
-1. EXECUTIVE SUMMARY
-2. KEY EVENTS
-3. FORECAST
-"""
     
     # Query Gemini to generate structured report
     response = gemini_model.generate_content(prompt)

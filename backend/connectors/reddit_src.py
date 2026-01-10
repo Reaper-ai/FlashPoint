@@ -2,7 +2,7 @@ import time
 import requests
 import pathway as pw 
 
-SUBREDDITS = "worldnews+geopolitics+technology+artificialintelligence"
+SUBREDDITS = "worldnews+geopolitics+news"
 POST_LIMIT = 50
 POLL_INTERVAL = 60 # Seconds (Safe rate limit)
 

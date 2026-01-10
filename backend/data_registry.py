@@ -5,7 +5,6 @@ from connectors.news_src import NewsSource
 from connectors.sim_src import SimulationSource
 from connectors.rss_src import RssSource
 import os
-import json
 from dotenv import load_dotenv
 
 load_dotenv()  # This loads the variables from .env

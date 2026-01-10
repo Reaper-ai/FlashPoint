@@ -1,8 +1,7 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
 import uvicorn
-from typing import List, Dict, Any
+from typing import Dict, Any
 from collections import deque
-import requests
 import google.generativeai as genai
 from dotenv import load_dotenv
 import os

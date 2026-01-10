@@ -3,7 +3,6 @@ import pathway as pw
 from telethon import TelegramClient, events
 
 
-
 CHANNELS = ["intelslava", "insider_paper", "disclosetv"]
 tags = {
     "intelslava": "Independent",

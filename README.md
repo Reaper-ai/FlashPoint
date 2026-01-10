@@ -21,6 +21,8 @@ Decision-makers (Governments, NGOs, Logistics) face a critical gap during rapidl
 
 It uses **Pathway** to ingest, embed, and index streaming data instantly, allowing an AI Commander to answer strategic questions based on events that happened **seconds ago**.
 
+The backend is exposed via a FastAPI service, enabling low-latency access to live intelligence, event summaries, and report generation while the Pathway engine continuously updates the RAG context.
+
 ### ✨ Key Features
 
 * **📡 Multi-Source Intel:** Aggregates data from **Telegram** (Raw speed), **Reddit** (Human intel), and **GNews** (Verified reports).
@@ -32,20 +34,33 @@ It uses **Pathway** to ingest, embed, and index streaming data instantly, allowi
 
 ### Tech Stack
 
-* **Engine:** [Pathway](https://pathway.com/) (Python ETL + RAG)
-* **LLM:** OpenAI GPT-4o + `text-embedding-3-small`
+* **Backend API:** FastAPI (Async REST backend)
+* **Streaming Engine:** Pathway (Python ETL + Live RAG)
+* **RAG Inference:** Local LLM (self-hosted, no external API dependency)
+* **PDF Intelligence Reports:** Gemini (used only for structured PDF generation)
+* **PDF Generation:** FPDF
 * **Connectors:** `Telethon` (Telegram MTProto), `PRAW` (Reddit), `feedparser` (RSS)
 * **Frontend:** Streamlit + Folium (Mapping)
 * **Deployment:** Docker Compose
 
 ---
 
+## 📄 Automated Intelligence Reports (PDF)
+
+Flashpoint can generate structured intelligence briefs in PDF format for decision-makers.
+
+**How it works:**
+1. Live events are aggregated via the RAG pipeline.
+2. Critical updates are summarized using a **Gemini model**.
+3. Reports are rendered into professional PDFs using **FPDF**.
+
+> Gemini is used **only for report generation**, not for real-time RAG inference.
+
 ## 🚀 Getting Started
 
 ### Prerequisites
 
 * Docker & Docker Compose
-* OpenAI API Key
 * Telegram API ID/Hash (Get from my.telegram.org)
 * Reddit Client ID/Secret
 
@@ -114,8 +129,11 @@ flashpoint/
 ├── backend/               # Pathway RAG Engine
 │   ├── connectors/        # Custom Python Connectors (Telegram/Reddit)
 │   ├── main.py            # Pipeline Logic
+│   ├── api.py             # Controlling api's
+│   └── data_registry.py   # Data Registeration
 │   └── Dockerfile
 ├── frontend/              # Streamlit Dashboard
+│   ├── assets/            # Logo
 │   ├── dashboard.py       # UI Logic
 │   └── Dockerfile
 ├── docker-compose.yaml    # Orchestration
@@ -125,8 +143,8 @@ flashpoint/
 
 ## 👥 Team
 
-* **[Your Name]** - Backend & Pathway Architecture
-* **[Teammate Name]** - Frontend & Design
+* **[Gaurav Upreti]** - Backend & Pathway Architecture
+* **[Ashmeet Singh Sandhu]** - Frontend & Design
 * **[Teammate Name]** - Data Strategy & Research
 ---
 

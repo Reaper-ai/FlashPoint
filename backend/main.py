@@ -64,7 +64,7 @@ def build_prompts_udf(documents, query) -> str:
 
 
 def run():
-    stream = get_simulation_stream()
+    stream = get_data_stream()
 
     pw.io.http.write(
         table=stream,

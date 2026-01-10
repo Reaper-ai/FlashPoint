@@ -21,9 +21,6 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-
-
-
 # --- ASSETS PATH ---
 current_dir = os.path.dirname(os.path.abspath(__file__))
 logo_path = os.path.join(current_dir, "assets", "logo.svg")
@@ -303,29 +300,50 @@ with col_feed:
         trigger_auto_download(pdf_bytes, f"SITREP_{datetime.date}.pdf")
 
 
-# --- 2. TACTICAL MAP ---
+# --- [Place this inside the main layout where col_map is defined] ---
 with col_map:
-    # REPLACED EMOJI 🗺️ -> ICON
-    st.markdown(f"""
-    <div style="display: flex; align-items: center;">
-        {get_icon("map", "#00e5ff", 28)}
-        <h4 class="text-cyan" style="margin: 0;">OPERATIONAL PICTURE</h4>
-    </div>
-    """, unsafe_allow_html=True)
-
-    m = folium.Map(location=[48.3794, 31.1656], zoom_start=5, tiles="CartoDB dark_matter", control_scale=True)
-    folium.CircleMarker([50.4501, 30.5234], radius=8, color="#ffb703", fill=True, fill_color="#ffb703", fill_opacity=0.7, popup="<b>Kyiv:</b> High Activity").add_to(m)
-    folium.CircleMarker([55.7558, 37.6173], radius=6, color="#00e5ff", fill=True, fill_color="#00e5ff", fill_opacity=0.6, popup="<b>Moscow:</b> Official Comms").add_to(m)
-    folium.Polygon(locations=[[49.0, 35.0], [48.0, 36.0], [47.0, 35.0], [48.0, 34.0]], color="#ffb703", weight=1, fill=True, fill_opacity=0.1, popup="Active Conflict Zone").add_to(m)
+    st.subheader("🗺️ Global Conflict Tracker")
     
-    st_folium(m, width="100%", height=550)
+    items = fetch_feed()
     
-    st.markdown(f"""
-        <div style="display: flex; align-items: center; margin-top: 15px;">
-        {get_icon("chart", "#94a3b8", 24)}
-        <h5 class="text-muted" style="margin: 0;">NARRATIVE DIVERGENCE</h5>
-        </div>
-        """, unsafe_allow_html=True)
+    # 1. Setup the Base Map (Cyberpunk Style)
+    # "cartodbdark_matter" is free and looks very tactical
+    m = folium.Map(location=[20, 0], zoom_start=2, tiles="cartodbdark_matter")
+    
+    map_data_found = False
+    
+    for item in items:
+        if "lat" in item and "lon" in item:
+            map_data_found = True
+            
+            # 2. Color Logic (Hex Codes for Folium)
+            bias = item.get("bias", "Neutral")
+            if "Russia" in bias or "China" in bias or "Eastern" in bias:
+                color = "#ef4444"  # Red (High Threat)
+            elif "Western" in bias or "US" in bias:
+                color = "#0ea5e9"  # Cyan/Blue (NATO)
+            else:
+                color = "#22c55e"  # Green (Verified/Neutral)
+            
+            # 3. Add Marker
+            folium.CircleMarker(
+                location=[item["lat"], item["lon"]],
+                radius=8,
+                color=color,
+                fill=True,
+                fill_color=color,
+                fill_opacity=0.7,
+                popup=folium.Popup(f"<b>{item['source']}</b><br>{item.get('text', '')[:100]}...", max_width=300),
+                tooltip=f"{item['source']} ({bias})"
+            ).add_to(m)
+    
+    # 4. Render Map
+    if map_data_found:
+        st_folium(m, width=None, height=500, use_container_width=True)
+    else:
+        st.info("📡 Scanning for geolocation signals...")
+        # Show empty map as fallback
+        st_folium(m, width=None, height=500, use_container_width=True)
 
     if 'divergence' in st.session_state:
         west, east = st.session_state['divergence']

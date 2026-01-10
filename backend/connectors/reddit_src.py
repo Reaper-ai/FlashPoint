@@ -15,14 +15,12 @@ import time
 import requests
 import pathway as pw 
 
-<<<<<<< HEAD
+
 # ========== COLLECTION PARAMETERS ==========
 # Subreddits monitored (combined using Reddit's multi-subreddit syntax)
 SUBREDDITS = "worldnews+geopolitics+technology+artificialintelligence"
 # Number of newest posts fetched per poll
-=======
 SUBREDDITS = "worldnews+geopolitics+news"
->>>>>>> a984c70811017dafea27637922b08cfdb71f385b
 POST_LIMIT = 50
 # Polling interval in seconds (kept conservative to avoid rate limits)
 POLL_INTERVAL = 60  # Seconds (Safe rate limit)

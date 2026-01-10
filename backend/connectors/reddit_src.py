@@ -1,7 +1,6 @@
 import time
 import requests
 import pathway as pw 
-from datetime import datetime
 
 SUBREDDITS = "worldnews+geopolitics+technology+artificialintelligence"
 POST_LIMIT = 50

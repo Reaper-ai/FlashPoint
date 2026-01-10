@@ -1,8 +1,6 @@
 import base64
 import streamlit.components.v1 as components
 from fpdf import FPDF
-import io
-
 
 # --- HELPER: PDF GENERATOR ---
 class PDF(FPDF):
@@ -30,7 +28,6 @@ def create_pdf(report_text, ):
     # Body
     pdf.set_font("Arial", size=11)
     # multi_cell handles line wrapping automatically
-    # encode/decode handles some basic unicode issues compatible with FPDF
     safe_text = report_text.encode('latin-1', 'replace').decode('latin-1')
     pdf.multi_cell(0, 8, safe_text)
     
@@ -55,5 +52,4 @@ def trigger_auto_download(file_bytes, filename):
     </body>
     </html>
     """
-    # Render invisible iframe that executes the JS
     components.html(html, height=0, width=0)

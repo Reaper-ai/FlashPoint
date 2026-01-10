@@ -94,7 +94,7 @@ Open [http://localhost:8501](https://www.google.com/search?q=http://localhost:85
 
 1. Open the Dashboard.
 2. Watch the **"Incoming Stream"** panel on the left.
-3. Wait for a live update from `@insider_paper` or `r/worldnews`.
+3. Wait for a live updates
 4. **Action:** Ask the AI: *"What just happened in [Region]?"*
 5. **Result:** The AI answers using the message that arrived 5 seconds ago.
    

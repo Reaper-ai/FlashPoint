@@ -1,7 +1,9 @@
 import os
 import sys
 from telethon import TelegramClient
+from dotenv import load_dotenv
 
+load_dotenv()  # Load variables from .env88
 # 1. Manually check for variables injected by Docker
 api_id = os.getenv("TELEGRAM_API_ID")
 api_hash = os.getenv("TELEGRAM_API_HASH")

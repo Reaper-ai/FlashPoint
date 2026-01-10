@@ -1,123 +1,119 @@
 import pathway as pw
-from connectors.telegram_src import TelegramSource
-from connectors.reddit_src import RedditSource
-from connectors.news_src import NewsSource
-from connectors.sim_src import SimulationSource
-from connectors.rss_src import RssSource
+from data_registry import get_data_stream, get_simulation_stream
+import pathway as pw
+from pathway.stdlib.indexing.nearest_neighbors import BruteForceKnnFactory
+from pathway.xpacks.llm.document_store import DocumentStore
+from pathway.xpacks.llm.embedders import SentenceTransformerEmbedder
+from pathway.xpacks.llm import llms
+
+class QuerySchema(pw.Schema):
+    messages: str
 
 
-import os
-from dotenv import load_dotenv
+def build_rag_pipeline(combined_stream):
+    rag_stream = combined_stream.select(
+        # 1. Rename 'text' -> 'data'
+        data=pw.this.text,
+        
+        # 2. Pack other columns into a dictionary called '_metadata'
+        _metadata=pw.apply(
+            lambda src, url, ts, bias: {
+                "source": src,
+                "url": url, 
+                "timestamp": ts, 
+                "bias": bias
+            },
+            pw.this.source,
+            pw.this.url,
+            pw.this.timestamp,
+            pw.this.bias
+        )
+    )
 
-load_dotenv()  # This loads the variables from .env
 
-NEWS_API_KEY = os.getenv("GNEWS_API_KEY")
-TELEGRAM_API_ID = os.getenv("TELEGRAM_API_ID")
-TELEGRAM_API_HASH = os.getenv("TELEGRAM_API_HASH")
-TELEGRAM_PHONE = os.getenv("TELEGRAM_PHONE")
+    embedder = SentenceTransformerEmbedder(
+        model="all-MiniLM-L6-v2")
+    # Define the Vector Store Server
+    retriever_factory = BruteForceKnnFactory(
+    embedder=embedder,
+    )
 
+    document_store = DocumentStore(
+    docs=rag_stream,
+    retriever_factory=retriever_factory,
+    parser=None,
+    splitter=None,
+    )
 
-God_Mode =  True # Set to True to enable simulation mode
+    print("✅ RAG Pipeline built successfully.")
+    return document_store
+
+def get_context(documents):
+    content_list = []
+    for doc in documents:
+        content_list.append(str(doc["text"]))
+    return " ".join(content_list)
+
+@pw.udf
+def build_prompts_udf(documents, query) -> str:
+    context = get_context(documents)
+    prompt = (
+        f"Given the following documents : \n {context} \nanswer this query: {query}"
+    )
+    return prompt
+
 
 def run():
-    print(" Flashpoint Engine Starting (Multi-Source Mode)...")
+    stream = get_simulation_stream()
 
-    # Unified Schema
-    class InputSchema(pw.Schema):
-        source: str
-        text: str
-        url: str
-        timestamp: float
-        bias: str
-
-    # 1. News API Source (12 hour delay)
-    t_news = pw.io.python.read(
-        NewsSource(NEWS_API_KEY, query="world", polling_interval=60),
-        schema=InputSchema
+    pw.io.http.write(
+        table=stream,
+        url='http://localhost:8000/v1/stream',
+        method='POST',
+        format='json'
     )
+
+    document_store = build_rag_pipeline(stream)
    
-    # 2. RSS Feeds from State Media + Western Media
-    t_rss_russia = pw.io.python.read(
-        RssSource("https://www.rt.com/rss/news/", source="Russia Today", bias_tag="Russia/Eastern"),
-        schema=InputSchema
-    )
-   
-    t_rss_china = pw.io.python.read(
-        RssSource("https://www.cgtn.com/subscribe/rss/section/world.xml", source="CGTN", bias_tag="China/Eastern"),
-        schema=InputSchema
-    )
+    webserver = pw.io.http.PathwayWebserver(host="0.0.0.0", port=8011)
 
-    t_rss_us = pw.io.python.read(
-        RssSource("https://rss.nytimes.com/services/xml/rss/nyt/World.xml", source="NYTimes", bias_tag="US/Western"),
-        schema=InputSchema
+    queries, writer = pw.io.http.rest_connector(
+        webserver=webserver,
+        route='/v1/query',
+        schema=QuerySchema,
+        autocommit_duration_ms=50,
+        delete_completed_queries=False,
     )
 
-    t_rss_uk = pw.io.python.read(
-        RssSource("https://feeds.bbci.co.uk/news/world/rss.xml", source="BBC", bias_tag="UK/Western"),
-        schema=InputSchema
+    queries = queries.select(
+        query = pw.this.messages,
+        k = 5,
+        metadata_filter = None,
+        filepath_globpattern = None,
     )
 
-    t_rss_combined = t_rss_russia.concat_reindex(t_rss_china, t_rss_us, t_rss_uk)    
-    
-    # 3. Telegram Source
-    t_telegram = pw.io.python.read(
-        TelegramSource(api_hash=TELEGRAM_API_HASH, api_id=TELEGRAM_API_ID, phone=TELEGRAM_PHONE),
-        schema=InputSchema,
-        mode="streaming"
+    retrieved_documents = document_store.retrieve_query(queries)
+    retrieved_documents = retrieved_documents.select(docs=pw.this.result)
+    queries_context = queries + retrieved_documents
+
+    prompts = queries_context+queries_context.select(
+    prompts=build_prompts_udf(pw.this.docs, pw.this.query)
     )
 
-    # 3. Reddit Source
-    t_reddit = pw.io.python.read(
-        RedditSource(),
-        schema=InputSchema,
-        mode="streaming"
+    model = llms.HFPipelineChat(
+        model="TinyLlama/TinyLlama-1.1B-Chat-v1.0",
     )
 
+    response = prompts.select(
+        *pw.this.without(pw.this.query, pw.this.prompts, pw.this.docs),
+        result=model(
+            llms.prompt_chat_single_qa(pw.this.prompts),
+        ),
+    )
 
-    # --- THE FIX ---
-    # We explicitly promise Pathway that Reddit and Telegram are separate streams.
-    # This satisfies the "disjoint" requirement.
-    
-    t_reddit = t_reddit.promise_universes_are_disjoint(t_telegram)
-    #combined_stream = t_news.concat_reindex(t_reddit, t_rss_combined, t_telegram)
-    combined_stream = t_news.concat_reindex(t_reddit, t_rss_combined)   
-    
-        
-    if God_Mode:
-        # Simulation Source (The "God Mode" Stream)
-        # Pointing to the file you created in Step 1
-        sim_path = "data/dummy.jsonl"
-        t_sim = pw.io.python.read(
-        SimulationSource(file_path=sim_path, interval=10),
-        schema=InputSchema,
-        autocommit_duration_ms=1000
-        )
+    writer(response)
 
-        combined_stream = combined_stream.concat_reindex(t_sim)
-
-    pw.io.csv.write(combined_stream, "output_unified.csv")
-
-    print("✅ Pipeline configured. Listening to World News & Telegram Channels...")
     pw.run()
-
-
 
 if __name__ == "__main__":
     run()
-
-    # # 1. Real Sources (Comment out if testing offline)
-    # # t_news = ...
-    
-    # # 2. Simulation Source (The "God Mode" Stream)
-    # # Pointing to the file you created in Step 1
-    # t_sim = pw.io.python.read(
-    #     SimulationSource("data/crisis_scenario.jsonl", interval=5),
-    #     schema=schema
-    # )
-
-    # # 3. Combine (or just use t_sim for testing)
-    # # combined_stream = t_news + t_sim
-    # # For now, let's just run the simulation to test:
-    # combined_stream = t_sim
-    
-    # # ... (Rest of RAG Pipeline) ...

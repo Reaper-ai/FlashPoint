@@ -55,7 +55,7 @@ class TelegramSource(pw.io.python.ConnectorSubject):
             for channel in CHANNELS:
                 try:
                     # Get last 3 messages from real history
-                    async for message in client.iter_messages(channel, limit=3):
+                    async for message in client.iter_messages(channel, limit=20):
                         if message and message.text:
                             await self._process_message(message, "HISTORY")
                 except Exception as e:

@@ -6,6 +6,12 @@ import time
 import base64
 import os
 from datetime import datetime
+import requests
+from report import create_pdf, trigger_auto_download
+
+API_BASE_URL = "http://localhost:"
+
+items = []
 
 # --- PAGE CONFIG ---
 st.set_page_config(
@@ -14,6 +20,9 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="collapsed"
 )
+
+
+
 
 # --- ASSETS PATH ---
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -122,6 +131,95 @@ def get_icon(name, color="#00e5ff", size=24):
 def get_utc_time():
     return datetime.utcnow().strftime("%H:%M:%S UTC")
 
+
+
+# --- SESSION STATE SETUP ---
+if "messages" not in st.session_state:
+    st.session_state.messages = []
+
+def fetch_feed():
+    """Polls the FastAPI backend for the latest 20 items."""
+    try:
+        response = requests.get(f"{API_BASE_URL}8000/v1/frontend/feed")
+        if response.status_code == 200:
+            return response.json()
+    except Exception as e:
+        # Fail silently to avoid UI crashes
+        return []
+    return []
+
+def send_chat_query(query):
+    """Sends user question to the RAG Intelligence Agent."""
+    try:
+        response = requests.post(
+            f"{API_BASE_URL}8011/v1/query", 
+            json={"messages": query}
+        )
+        if response.status_code == 200:
+            return response.json()
+        else:
+            return "⚠️ Connection Error: Intel Core Unreachable."
+    except Exception as e:
+        return f"⚠️ System Error: {str(e)}"
+
+# --- COMPONENT: LIVE FEED FRAGMENT ---
+@st.fragment(run_every="2s")
+def render_live_feed():
+    st.subheader("📡 Live Signals")
+    
+    # 1. Get Data
+    items = fetch_feed()
+    west, east = calculate_narrative_balance(items)
+    st.session_state['divergence'] = [west, east]
+
+    if not items:
+        st.info("Waiting for data stream...")
+        return
+
+    # 2. Render Loop
+    for item in items:
+        # Safe extraction
+        text = item.get("text", "")
+        source = item.get("source", "UNKNOWN")
+        bias = item.get("bias", "Neutral")
+        
+        # Determine Color based on Source/Bias
+        card_class = "cyber-card"
+        if "Russia" in bias or "China" in bias:
+            card_class += " alert-card"
+        elif "Neutral" in bias:
+            card_class += " neutral-card"
+            
+        # HTML Card
+        st.markdown(f"""
+        <div class="{card_class}">
+            <small style="color: #94a3b8; font-weight: bold;">{source} • {bias}</small>
+            <div style="color: #e2e8f0; margin-top: 4px;">{text}</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+
+# Add this inside your render_live_feed() or sidebar function
+def calculate_narrative_balance(items):
+    total = len(items)
+    if total == 0:
+        return 50, 50 # Default if empty
+    
+    # Count tags based on your backend logic
+    western_count = sum(1 for i in items if "Western" in i.get("bias", ""))
+    eastern_count = sum(1 for i in items if ("Chine" in i.get("bias", "") or "Russia" in i.get("bias", "")))
+    
+    # Calculate percentages
+    west_pct = int((western_count / total) * 100)
+    east_pct = int((eastern_count / total) * 100)
+    
+    # Handle the "Neutral" remainder if you want, or just normalize these two
+    if west_pct + east_pct == 0:
+        return 50, 50
+        
+    return west_pct, east_pct
+
+
 # --- TOP NAVIGATION ---
 h1, h2, h3 = st.columns([2, 4, 2])
 
@@ -174,43 +272,36 @@ with col_feed:
     """, unsafe_allow_html=True)
     
     with st.container(height=600):
-        feed_items = [
-            {"text": "BREAKING: Large convoy of unidentified military vehicles spotted heading towards Border Region X.", "source": "Simulation", "bias": "Neutral/Raw", "url": "susuus.com", "timestamp": "12:34:56 UTC"},
-            {"text": "Local residents in Border Region X report hearing heavy artillery fire. Power outages confirmed.", "source": "Simulation", "bias": "Human Intel", "url": "reddit.com" , "timestamp": "12:36:10 UTC"},
-            {"text": "Defense Ministry announces 'Routine Training Exercises' near the border. Denies any aggressive intent.", "source": "Simulation", "bias": "State-Media (RU)", "url": "tass.com" , "timestamp": "12:36:30 UTC"},
-            {"text": "US Satellite imagery confirms massive troop buildup. Pentagon warns of imminent incursion.", "source": "Simulation", "bias": "Western/Global", "url": "cnn.com" , "timestamp": "12:36:45 UTC"},
-            {"text": "URGENT: Bridge connecting the two regions has been destroyed. Civilians trapped.", "source": "Simulation", "bias": "Neutral/Raw", "url": "telegram.com", "timestamp": "12:37:22 UTC"},
-            {"text": "Foreign Ministry condemns 'Western hysteria' and provocation regarding border security measures.", "source": "Simulation", "bias": "State-Media (CN)", "url": "xinhuanet.com", "timestamp": "12:38:45 UTC"},
-            {"text": "Reports of cyberattacks hitting regional hospitals and infrastructure. Communications down.", "source": "Simulation", "bias": "Human Intel", "url": "reddit.com", "timestamp": "12:39:01 UTC"},
-            {"text": "UN Security Council calls for emergency meeting regarding the escalation in Region X.", "source": "Simulation", "bias": "Western/Global", "url": "reuters.com", "timestamp": "12:40:15 UTC"}
-        ]
-        
-        for item in feed_items:
-            if item['bias'] in ["State-Media (RU)", "State-Media (CN)"]:
-                css_class = "cyber-card alert-card"
-                tag_color = "#ffb703"
-            elif item['bias'] == "Human Intel":
-                css_class = "cyber-card"
-                tag_color = "#94a3b8"
-            else:
-                css_class = "cyber-card"
-                tag_color = "#00e5ff"
-
-            st.markdown(f"""
-            <div class="{css_class}">
-                <div style="display: flex; justify-content: space-between; font-size: 0.75em; color: #cdd6f4;">
-                    <span>[{item['timestamp']}] {item['source']}</span>
-                    <span style="color: {tag_color}; font-weight: bold;">[{item['bias']}]</span>
-                </div>
-                <div style="margin-top: 5px; font-size: 0.9em; color: #e0e6ed;">
-                    {item['text']}
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
+        render_live_feed()
     
-    b1, b2 = st.columns(2)
-    b1.button("GENERATE REPORT", use_container_width=True)
-    b2.button("INJECT SIMULATION", use_container_width=True)
+    #1. GENERATE BUTTON
+    if st.button("GENERATE REPORT", use_container_width=True):
+        with st.spinner("📡 Intercepting data & generating SITREP..."):
+            try:
+                # Call your Gemini/Backend API
+                res = requests.get(f"{API_BASE_URL}8000/v1/generate_report")
+                
+                if res.status_code == 200:
+                    report_content = res.json().get("report", "No report generated.")
+                    
+                    # Save to session state so it doesn't vanish on rerun
+                    st.session_state['latest_report'] = report_content
+                    st.success("Report Generated Successfully")
+                elif res.status_code == 422:
+                    error_details = res.json()  # <--- THIS holds the answer
+                    st.error(f"❌ DATA FORMAT ERROR: {error_details}")
+                    st.error("Failed to contact Intelligence Core.")
+            except Exception as e:
+                st.error(f"Connection Error: {e}")
+
+    # 2. DOWNLOAD BUTTON (Checks if a report exists in state)
+    if 'latest_report' in st.session_state:
+        st.text_area("Preview", st.session_state['latest_report'], height=300)
+        
+        # Convert to PDF bytes
+        pdf_bytes = create_pdf(st.session_state['latest_report'])
+        trigger_auto_download(pdf_bytes, f"SITREP_{datetime.date}.pdf")
+
 
 # --- 2. TACTICAL MAP ---
 with col_map:
@@ -229,21 +320,25 @@ with col_map:
     
     st_folium(m, width="100%", height=550)
     
-    # REPLACED EMOJI 📊 -> ICON
     st.markdown(f"""
-    <div style="display: flex; align-items: center; margin-top: 15px;">
+        <div style="display: flex; align-items: center; margin-top: 15px;">
         {get_icon("chart", "#94a3b8", 24)}
         <h5 class="text-muted" style="margin: 0;">NARRATIVE DIVERGENCE</h5>
-    </div>
-    """, unsafe_allow_html=True)
-    
+        </div>
+        """, unsafe_allow_html=True)
+
+    if 'divergence' in st.session_state:
+        west, east = st.session_state['divergence']
+    else:
+        west, east = 50,50
+
     nd1, nd2 = st.columns(2)
     with nd1:
-        st.markdown('<span style="color: #00e5ff;">WESTERN BLOC (65%)</span>', unsafe_allow_html=True)
-        st.progress(65)
+        st.markdown(f'<span style="color: #00e5ff;">WESTERN BLOC ({west}%)</span>', unsafe_allow_html=True)
+        st.progress(west)
     with nd2:
-        st.markdown('<span style="color: #ffb703;">EASTERN BLOC (35%)</span>', unsafe_allow_html=True)
-        st.progress(35)
+        st.markdown(f'<span style="color: #ffb703;">EASTERN BLOC ({east}%)</span>', unsafe_allow_html=True)
+        st.progress(east)
 
 # --- 3. INTEL COMMANDER ---
 with col_intel:
@@ -251,13 +346,36 @@ with col_intel:
     st.markdown(f"""
     <div style="display: flex; align-items: center; margin-bottom: 10px;">
         {get_icon("robot", "#00e5ff", 28)}
-        <h4 class="text-cyan" style="margin: 0;">INTEL COMMANDER</h4>
+        <h4 class="text-cyan" style="margin: 0;">INTEL ANALYSIS</h4>
     </div>
     """, unsafe_allow_html=True)
     
-    with st.container(height=600):
-        st.chat_message("assistant").write("Commander, system initialized. I am tracking 4,200 data points. Waiting for query.")
-        st.chat_message("user").write("/analyze sector_4")
-        st.chat_message("assistant").write("Analyzing Sector 4...\n\n**Result:** Activity Detected.\n- **Signal:** 300+ Telegram reports.\n- **Status:** Unconfirmed.\n- **Action:** Recommendation: Monitor.")
+    # 1. Display Chat History
+    container = st.container(height=500)
+    with container:
+        for msg in st.session_state.messages:
+            with st.chat_message(msg["role"]):
+                st.markdown(msg["content"])
+
+    # 2. Handle User Input
+    if prompt := st.chat_input("Query the intelligence database..."):
+        # Show User Message
+        st.session_state.messages.append({"role": "user", "content": prompt})
+        with container:
+            with st.chat_message("user"):
+                st.markdown(prompt)
+
+        # Show Assistant "Thinking"
+        with container:
+            with st.chat_message("assistant"):
+                message_placeholder = st.empty()
+                message_placeholder.markdown("🔄 *Analyzing secure channels...*")
+                
+                # Call Backend
+                full_response = send_chat_query(prompt)
+                
+                # Update UI
+                message_placeholder.markdown(full_response)
         
-    st.text_input("COMMAND_LINE_INPUT >", placeholder="Type /help or query...", key="chat_input")
+        # Save History
+        st.session_state.messages.append({"role": "assistant", "content": full_response})

@@ -26,7 +26,7 @@ The backend is exposed via a FastAPI service, enabling low-latency access to liv
 ### ✨ Key Features
 
 * **📡 Multi-Source Intel:** Aggregates data from **Telegram** (Raw speed), **Reddit** (Human intel), and **GNews,RSS Feed** (Verified reports).
-* **⚖️ Narrative Divergence:** Unique "Bias Detection" engine that contrasts Western (BBC/NYT) vs. Eastern (RT/CGTN) reporting on the same event.
+* **⚖️ Narrative Divergence:** Bias Detection capability that contrasts Western (BBC/NYT) vs. Eastern (RT/CGTN) reporting on the same event.
 * **📍 Live Conflict Map:** Auto-extracts geolocation from text streams to pin "Active Threats" on a tactical map.
 * **⚡ Zero-DB Architecture:** No vector database to manage. Pathway handles streaming updates in-memory.
 * **📄 Automated Intelligence Reports (PDF):** Flashpoint can generate structured intelligence briefs in PDF format for decision-makers.
@@ -117,7 +117,7 @@ flashpoint/
 │   ├── report.py          # Pdf generation logic  
 │   └── Dockerfile
 ├── docker-compose.yaml # Orchestration
-│   ├── requirements.txt
+├── requirements.txt
 └── README.md
 
 ```

@@ -19,7 +19,7 @@ Decision-makers (Governments, NGOs, Logistics) face a critical gap during rapidl
 
 **Flashpoint** is a **Live RAG (Retrieval Augmented Generation)** engine that listens to the raw pulse of the world—Telegram channels, Reddit threads, and News Wires—in real-time.
 
-It uses **Pathway** to ingest, embed, and index streaming data instantly, allowing an AI Commander to answer strategic questions based on events that happened **seconds ago**.
+It uses **Pathway** to ingest, embed, and index streaming data instantly, allowing an AI LLM to answer strategic questions based on events that happened **seconds ago**.
 
 The backend is exposed via a FastAPI service, enabling low-latency access to live intelligence, event summaries, and report generation while the Pathway engine continuously updates the RAG context.
 

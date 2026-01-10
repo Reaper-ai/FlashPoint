@@ -117,7 +117,7 @@ flashpoint/
 │   ├── report.py          # Pdf generation logic  
 │   └── Dockerfile
 ├── docker-compose.yaml # Orchestration
-│   ├── requirements.txt
+├── requirements.txt
 └── README.md
 
 ```

@@ -25,36 +25,26 @@ The backend is exposed via a FastAPI service, enabling low-latency access to liv
 
 ### ✨ Key Features
 
-* **📡 Multi-Source Intel:** Aggregates data from **Telegram** (Raw speed), **Reddit** (Human intel), and **GNews** (Verified reports).
-* **⚖️ Narrative Divergence:** Unique "Bias Detection" engine that contrasts Western (CNN/Reuters) vs. Eastern (TASS/Xinhua) reporting on the same event.
+* **📡 Multi-Source Intel:** Aggregates data from **Telegram** (Raw speed), **Reddit** (Human intel), and **GNews,RSS Feed** (Verified reports).
+* **⚖️ Narrative Divergence:** Unique "Bias Detection" engine that contrasts Western (BBC/NYT) vs. Eastern (RT/CGTN) reporting on the same event.
 * **📍 Live Conflict Map:** Auto-extracts geolocation from text streams to pin "Active Threats" on a tactical map.
 * **⚡ Zero-DB Architecture:** No vector database to manage. Pathway handles streaming updates in-memory.
-
+* **📄 Automated Intelligence Reports (PDF):** Flashpoint can generate structured intelligence briefs in PDF format for decision-makers.
+  
 ---
 
 ### Tech Stack
 
 * **Backend API:** FastAPI (Async REST backend)
 * **Streaming Engine:** Pathway (Python ETL + Live RAG)
-* **RAG Inference:** Local LLM (self-hosted, no external API dependency)
+* **RAG Inference:** TinyLlama/TinyLlama-1.1B-Chat-v1.0 (self-hosted, no external API dependency)
 * **PDF Intelligence Reports:** Gemini (used only for structured PDF generation)
 * **PDF Generation:** FPDF
-* **Connectors:** `Telethon` (Telegram MTProto), `PRAW` (Reddit), `feedparser` (RSS)
+* **Connectors:** `Telethon` (Telegram MTProto), `Request` (Reddit,GNews), `feedparser` (RSS)
 * **Frontend:** Streamlit + Folium (Mapping)
 * **Deployment:** Docker Compose
 
 ---
-
-## 📄 Automated Intelligence Reports (PDF)
-
-Flashpoint can generate structured intelligence briefs in PDF format for decision-makers.
-
-**How it works:**
-1. Live events are aggregated via the RAG pipeline.
-2. Critical updates are summarized using a **Gemini model**.
-3. Reports are rendered into professional PDFs using **FPDF**.
-
-> Gemini is used **only for report generation**, not for real-time RAG inference.
 
 ## 🚀 Getting Started
 
@@ -101,25 +91,14 @@ docker-compose up --build
 
 ---
 
-## 🕹️ Demo Scenarios
-
-### Scenario 1: The "Live" Test
+## 🕹️ Demo 
 
 1. Open the Dashboard.
 2. Watch the **"Incoming Stream"** panel on the left.
 3. Wait for a live update from `@insider_paper` or `r/worldnews`.
 4. **Action:** Ask the AI: *"What just happened in [Region]?"*
 5. **Result:** The AI answers using the message that arrived 5 seconds ago.
-
-### Scenario 2: The Simulation
-
-*To demonstrate capability when news is slow:*
-
-1. Click **"Inject Simulation"** in the sidebar.
-2. This feeds a pre-set scenario: *"BREAKING: 10:45 AM - Dam failure reported in Region X."*
-3. Observe the **Threat Map** immediately drop a **Red Pin** on the location.
-4. The **Defcon Gauge** escalates to "CRITICAL".
-
+   
 ---
 
 ## 📂 Project Structure
@@ -130,22 +109,25 @@ flashpoint/
 │   ├── connectors/        # Custom Python Connectors (Telegram/Reddit)
 │   ├── main.py            # Pipeline Logic
 │   ├── api.py             # Controlling api's
+│   ├── auth_telegram.py   #
 │   └── data_registry.py   # Data Registeration
 │   └── Dockerfile
 ├── frontend/              # Streamlit Dashboard
 │   ├── assets/            # Logo
 │   ├── dashboard.py       # UI Logic
 │   └── Dockerfile
-├── docker-compose.yaml    # Orchestration
+│   ├── report.py  
+├── docker-compose.yaml # Orchestration
+│   ├── requirements.txt
 └── README.md
 
 ```
 
 ## 👥 Team
 
-* **[Gaurav Upreti]** - Backend & Pathway Architecture
-* **[Ashmeet Singh Sandhu]** - Frontend & Design
-* **[Teammate Name]** - Data Strategy & Research
+* **[Gaurav Upreti]** - Backend & Pathway Pipeline
+* **[Ashmeet Singh Sandhu]** - Frontend,Data Connectors & Design
+  
 ---
 
 *Built with ❤️ using Pathway.*

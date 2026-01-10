@@ -2,5 +2,8 @@
 .env.example
 venv/
 .venv/
-__pycache__/
+backend/__pycache__/
+backend/connectors/__pycache__/
+frontend/__pycache__/
 .vscode/
+session_flashpoint.session

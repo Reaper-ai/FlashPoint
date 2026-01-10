@@ -1,17 +1,22 @@
 # The Core Engine
+pathway
 pathway[xpack-llm]
+pathway[xpack-llm-local]
 
 # Data Connectors
-telethon        # For Telegram
-praw            # For Reddit
-requests        # For GNews/RSS
-beautifulsoup4  # If you need to clean up HTML text
+telethon        
+requests        
+beautifulsoup4  
 feedparser
+fastapi
+uvicorn
+google-generativeai
 
 # Frontend
-streamlit       # For the Dashboard
-watchdog        # Helps Streamlit reload faster
+streamlit
+folium
+fpdf
+streamlit-folium
 
 # Environment
-python-dotenv   # To manage API Keys securely
-openai          # Standard OpenAI library
+python-dotenv   

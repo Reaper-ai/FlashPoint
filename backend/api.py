@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 """FastAPI Backend Service for FlashPoint Intelligence Engine
 
 Responsibilities:
@@ -8,10 +9,12 @@ Responsibilities:
 """
 
 from fastapi import FastAPI, Request
+=======
+from fastapi import FastAPI
+>>>>>>> a984c70811017dafea27637922b08cfdb71f385b
 import uvicorn
-from typing import List, Dict, Any
+from typing import Dict, Any
 from collections import deque
-import requests
 import google.generativeai as genai
 from dotenv import load_dotenv
 import os
@@ -130,7 +133,36 @@ def get_feed():
 # ========== INTELLIGENCE REPORT GENERATION ==========
 @app.get("/v1/generate_report")
 def generate_report():
+<<<<<<< HEAD
     """Generate formal intelligence briefing from event stream
+=======
+    """Generates a formal intelligence briefing on a topic."""
+
+    # 2. Prompt for Report Format
+
+    context_text = "\n".join([f"- {d['text']}" for d in latest_news])
+    prompt = f""" TASK: Synthesize the provided 'Raw Intel' into a professional News Briefing. 
+        CONSTRAINTS:
+        1. Use ONLY the provided text below. Do NOT fill in missing data like names, dates, or events not present.
+        2. Tone: Objective, Journalistic, Concise.
+        3. Cite the source name in brackets [Source] for every claim.
+        4. Reply in plain text, do not give response in markdown
+    
+        RAW INTEL:
+        {context_text}
+    
+        REQUIRED OUTPUT FORMAT:
+        ##  Global Situation Summary
+        [Write a 2-3 sentence executive summary of the provided text]
+
+        ## Key Developments
+        - **[Category/Region]**: [Detail] [Source]
+        - **[Category/Region]**: [Detail] [Source]
+    
+        ## Outlook
+        [Short forecast based *only* on the provided trends]
+    """
+>>>>>>> a984c70811017dafea27637922b08cfdb71f385b
     
     Process:
     1. Extract textual content from all buffered events

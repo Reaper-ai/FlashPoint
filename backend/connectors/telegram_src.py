@@ -14,8 +14,12 @@ import asyncio
 import pathway as pw
 from telethon import TelegramClient, events
 
+<<<<<<< HEAD
 # ========== CHANNEL CONFIGURATION ==========
 # Telegram channels to monitor in real time
+=======
+
+>>>>>>> a984c70811017dafea27637922b08cfdb71f385b
 CHANNELS = ["intelslava", "insider_paper", "disclosetv"]
 
 # Source-level bias/provenance tags (used for narrative analysis)

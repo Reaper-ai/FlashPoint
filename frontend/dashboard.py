@@ -129,7 +129,7 @@ def render_live_feed():
         st.info("Waiting for data stream...")
         return
 
-    for item in items:
+    for item in reversed(items):
         text = item.get("text", "")
         source = item.get("source", "UNKNOWN")
         bias = item.get("bias", "Neutral")

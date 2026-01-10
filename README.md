@@ -41,7 +41,7 @@ The backend is exposed via a FastAPI service, enabling low-latency access to liv
 * **PDF Intelligence Reports:** Gemini (used only for structured PDF generation)
 * **PDF Generation:** FPDF
 * **Connectors:** `Telethon` (Telegram MTProto), `Request` (Reddit,GNews), `feedparser` (RSS)
-* **Frontend:** Streamlit + Folium (Mapping)
+* **Frontend:** Streamlit + Folium (Maps)
 * **Deployment:** Docker Compose
 
 ---

@@ -38,7 +38,7 @@ class TelegramSource(pw.io.python.ConnectorSubject):
     - Emits structured rows directly into the Pathway dataflow
     """
 
-    def __init__(self, api_id, api_hash, phone, polling_interval=30):
+    def __init__(self, api_id, api_hash, phone, polling_interval=60):
         """
         Initialize the Telegram connector.
 

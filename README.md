@@ -3,7 +3,7 @@
 
 > **"While other AI models tell you what happened yesterday, Flashpoint tells you what is happening right now."**
 
-### 🎥 [Watch the Demo Video Here] (Link needed)
+### 🎥 [Watch the Demo Video Here](https://youtu.be/lqzr3LzJZWU)
 
 ---
 

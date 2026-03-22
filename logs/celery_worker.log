@@ -149,3 +149,8 @@
 [2026-03-22 16:02:11,368: WARNING/ForkPoolWorker-11] ✅ RSS Russia Today: 0 new items
 [2026-03-22 16:02:11,378: INFO/ForkPoolWorker-11] Task tasks.rss_worker.fetch_single_rss[f8671780-6ad4-4d06-b438-4c63a91164d8] succeeded in 3.4892667650001385s: {'status': 'success', 'feed': 'Russia Today', 'new_items': 0}
 [2026-03-22 16:02:14,094: INFO/MainProcess] Task tasks.reddit_worker.fetch_reddit[d71d27e1-734d-401d-8ae5-eaaef848c24a] received
+[2026-03-22 16:02:16,680: INFO/MainProcess] Task tasks.processor.process_event[3a181ec7-c191-4b49-bf1b-0b1c439d538a] received
+[2026-03-22 16:02:16,688: WARNING/ForkPoolWorker-11] ⚠️ Event None not found
+[2026-03-22 16:02:16,689: INFO/ForkPoolWorker-11] Task tasks.processor.process_event[3a181ec7-c191-4b49-bf1b-0b1c439d538a] succeeded in 0.0075494269985938445s: {'status': 'error', 'message': 'Event not found'}
+[2026-03-22 16:02:16,719: WARNING/ForkPoolWorker-10] ✅ Reddit: 1 new posts
+[2026-03-22 16:02:16,721: INFO/ForkPoolWorker-10] Task tasks.reddit_worker.fetch_reddit[d71d27e1-734d-401d-8ae5-eaaef848c24a] succeeded in 2.626639743999476s: {'status': 'success', 'new_posts': 1}

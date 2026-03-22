@@ -24,10 +24,12 @@ async function generateReport() {
         const data = await resp.json();
         latestReport = data.report;
 
-        const outputDiv = document.getElementById("report-output");
-        if (outputDiv) {
-            outputDiv.innerHTML = `<pre>${latestReport}</pre>`;
-        }
+        // Show report section and populate preview
+        const reportSection = document.getElementById("report-section");
+        const reportPreview = document.getElementById("report-preview");
+
+        if (reportSection) reportSection.classList.remove("hidden");
+        if (reportPreview) reportPreview.value = latestReport;
 
         showNotification("SITREP generated successfully", "success");
         console.log("✅ Report generated");
@@ -35,15 +37,10 @@ async function generateReport() {
     } catch (err) {
         console.error("Report generation failed:", err);
         showNotification(`Failed to generate report: ${err.message}`, "error");
-        
-        const outputDiv = document.getElementById("report-output");
-        if (outputDiv) {
-            outputDiv.innerHTML = `<div class="cyber-card alert-card">❌ ${err.message}</div>`;
-        }
 
     } finally {
         btn.disabled = false;
-        btn.textContent = "🔄 Generate Report";
+        btn.textContent = "GENERATE REPORT";
     }
 }
 
@@ -80,7 +77,7 @@ async function downloadPDF() {
 
     } finally {
         btn.disabled = false;
-        btn.textContent = "📄 Download PDF";
+        btn.textContent = "⬇ DOWNLOAD PDF";
     }
 }
 

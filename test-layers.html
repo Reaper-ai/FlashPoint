@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FlashPoint - Enhanced Layer Test</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="frontend/web/styles.css" />
+    <style>
+        .test-section {
+            border: 1px solid #333;
+            padding: 10px;
+            margin: 10px 0;
+            background: rgba(0,255,0,0.05);
+        }
+        .log-area {
+            background: #000;
+            color: #0f0;
+            font-family: monospace;
+            height: 300px;
+            overflow-y: scroll;
+            padding: 5px;
+            border: 1px solid #0f0;
+        }
+        .controls {
+            margin: 10px 0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+        .controls button {
+            background: #007700;
+            color: #fff;
+            border: 1px solid #00ff00;
+            padding: 5px 10px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .controls button:hover { background: #00aa00; }
+        .layer-info {
+            background: rgba(0,255,0,0.1);
+            padding: 10px;
+            border: 1px solid #0f0;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .stat-box {
+            display: inline-block;
+            margin: 5px;
+            padding: 5px 10px;
+            background: rgba(0,0,0,0.8);
+            border: 1px solid #0f0;
+            color: #0f0;
+        }
+    </style>
+</head>
+<body class="cyber-theme">
+    <div class="container">
+        <h1>🚀 FlashPoint Enhanced Layer Test</h1>
+
+        <div class="layer-info">
+            <h3>📊 Layer Statistics (Auto-updating)</h3>
+            <div id="layerStats">Initializing...</div>
+        </div>
+
+        <div class="test-section">
+            <h3>🗺️ Map with Layer Controls</h3>
+            <div id="map" style="height: 500px; width: 100%; border: 1px solid #0f0;"></div>
+        </div>
+
+        <div class="controls">
+            <button onclick="testAll()">🧪 Test All Markers</button>
+            <button onclick="FlashPointDebug.addTestMilitary()">🎯 Add Military Aircraft</button>
+            <button onclick="FlashPointDebug.addTestCivilian()">✈️ Add Civilian Aircraft</button>
+            <button onclick="FlashPointDebug.addTestTanker()">🛢️ Add Oil Tanker</button>
+            <button onclick="testConflict()">⚔️ Add Test Conflict</button>
+            <button onclick="testHotspot()">📍 Add Test Hotspot</button>
+        </div>
+
+        <div class="controls">
+            <button onclick="FlashPointDebug.clearLayer('military')">Clear Military</button>
+            <button onclick="FlashPointDebug.clearLayer('civilian')">Clear Civilian</button>
+            <button onclick="FlashPointDebug.clearLayer('tankers')">Clear Tankers</button>
+            <button onclick="FlashPointDebug.clearLayer('conflicts')">Clear Conflicts</button>
+            <button onclick="FlashPointDebug.clearLayer('hotspots')">Clear Hotspots</button>
+            <button onclick="FlashPointDebug.clearAllMarkers()">🗑️ Clear All</button>
+        </div>
+
+        <div class="controls">
+            <button onclick="FlashPointDebug.refreshTracking()">🔄 Refresh Tracking</button>
+            <button onclick="simulateMovement()">🏃 Simulate Movement</button>
+            <button onclick="FlashPointDebug.checkMap()">🔍 Check Map Status</button>
+            <button onclick="clearLog()">Clear Log</button>
+        </div>
+
+        <div class="test-section">
+            <h3>📝 Test Log</h3>
+            <div id="testLog" class="log-area"></div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script type="module">
+        import { initMap, renderConflictMarkers, updateMapHotspot, getMapStats } from './frontend/web/js/map.js?v=2';
+        import './frontend/web/js/debug.js?v=2';
+
+        // Override console to capture logs
+        const originalLog = console.log;
+        const originalError = console.error;
+
+        function logToTest(msg, isError = false) {
+            originalLog(msg);
+            const logArea = document.getElementById('testLog');
+            if (logArea) {
+                const timestamp = new Date().toLocaleTimeString();
+                const color = isError ? '#f00' : '#0f0';
+                logArea.innerHTML += `<div style="color: ${color}">[${timestamp}] ${msg}</div>`;
+                logArea.scrollTop = logArea.scrollHeight;
+            }
+        }
+
+        console.log = logToTest;
+        console.error = (msg) => logToTest(msg, true);
+
+        // Initialize map
+        logToTest("🚀 Starting enhanced layer test...");
+        const mapReady = initMap();
+        logToTest(`🗺️ Map initialization: ${mapReady ? 'SUCCESS' : 'FAILED'}`);
+
+        // Update stats every 2 seconds
+        function updateStats() {
+            const stats = getMapStats();
+            const statsDiv = document.getElementById('layerStats');
+            if (statsDiv && stats) {
+                statsDiv.innerHTML = `
+                    <span class="stat-box">🎯 Military: ${stats.militaryAircraft}</span>
+                    <span class="stat-box">✈️ Civilian: ${stats.civilianAircraft}</span>
+                    <span class="stat-box">🛢️ Tankers: ${stats.oilTankers}</span>
+                    <span class="stat-box">⚔️ Conflicts: ${stats.conflicts}</span>
+                    <span class="stat-box">📍 Hotspots: ${stats.hotspots}</span>
+                    <span class="stat-box">📊 Total: ${stats.militaryAircraft + stats.civilianAircraft + stats.oilTankers + stats.conflicts + stats.hotspots}</span>
+                `;
+            }
+        }
+
+        setInterval(updateStats, 2000);
+        setTimeout(updateStats, 1000); // Initial update
+
+        // Test functions
+        window.testAll = function() {
+            logToTest("🧪 Testing all marker types...");
+
+            // Add one of each type with delay for visibility
+            FlashPointDebug.addTestMilitary();
+            setTimeout(() => FlashPointDebug.addTestCivilian(), 500);
+            setTimeout(() => FlashPointDebug.addTestTanker(), 1000);
+            setTimeout(() => testConflict(), 1500);
+            setTimeout(() => testHotspot(), 2000);
+
+            logToTest("✅ All test markers should be visible with layer controls");
+        };
+
+        window.testConflict = function() {
+            const mockConflicts = [{
+                name: "Test Conflict Zone",
+                lat: 33.5731,
+                lon: -7.5898, // Morocco
+                severity: "high",
+                status: "Active"
+            }];
+
+            renderConflictMarkers(mockConflicts);
+            logToTest("⚔️ Added test conflict marker");
+        };
+
+        window.testHotspot = function() {
+            const mockEvent = {
+                id: 999,
+                lat: 35.6762,
+                lon: 139.6503, // Tokyo
+                place: "Tokyo Test Location",
+                text: "This is a test geo-extracted event for hotspot testing"
+            };
+
+            updateMapHotspot(mockEvent);
+            logToTest("📍 Added test hotspot marker");
+        };
+
+        window.simulateMovement = function() {
+            logToTest("🏃 Simulating aircraft movement...");
+
+            // Create multiple aircraft with movement simulation
+            const baseLocations = [
+                { lat: 40.0, lon: -73.0, type: 'military', name: 'MILITARY-001' },
+                { lat: 41.0, lon: -74.0, type: 'civilian', name: 'CIVILIAN-001' },
+                { lat: 42.0, lon: -75.0, type: 'military', name: 'MILITARY-002' }
+            ];
+
+            let step = 0;
+            const moveInterval = setInterval(() => {
+                step++;
+
+                baseLocations.forEach((base, index) => {
+                    // Simulate movement (small increments)
+                    const newLat = base.lat + (step * 0.1);
+                    const newLon = base.lon + (step * 0.05);
+
+                    const layer = base.type === 'military' ?
+                        window.FlashPointMap.militaryAircraftLayer :
+                        window.FlashPointMap.civilianAircraftLayer;
+
+                    if (layer) {
+                        // Clear previous marker for this aircraft
+                        layer.eachLayer(marker => {
+                            if (marker.options.aircraftId === base.name) {
+                                layer.removeLayer(marker);
+                            }
+                        });
+
+                        // Add new marker at new position
+                        const color = base.type === 'military' ? '#ff3333' : '#0099ff';
+                        const icon = base.type === 'military' ? '🎯' : '✈️';
+
+                        const marker = L.circleMarker([newLat, newLon], {
+                            color: color,
+                            fillColor: color,
+                            fillOpacity: 0.8,
+                            radius: base.type === 'military' ? 10 : 6,
+                            weight: 3,
+                            aircraftId: base.name // Custom property for tracking
+                        });
+
+                        const arrow = step > 1 ? ' ↗' : '';
+                        marker.bindPopup(`${icon} ${base.name}${arrow}<br>Step: ${step}<br>Moving simulation`);
+                        marker.addTo(layer);
+                    }
+                });
+
+                if (step >= 5) {
+                    clearInterval(moveInterval);
+                    logToTest("✅ Movement simulation complete - aircraft should show direction arrows");
+                }
+            }, 1000);
+        };
+
+        window.clearLog = function() {
+            document.getElementById('testLog').innerHTML = '';
+        };
+
+        logToTest("✅ Enhanced layer test ready!");
+        logToTest("📋 Use layer controls in top-right to toggle visibility");
+        logToTest("🎮 Try the test buttons to verify all layers work");
+    </script>
+</body>
+</html>

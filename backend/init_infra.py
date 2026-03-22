@@ -19,7 +19,6 @@ def check_postgresql():
     try:
         with engine.connect() as conn:
             result = conn.execute(text("SELECT version();"))
-            conn.execute(text("CREATE EXTENSION IF NOT EXISTS timescaledb CASCADE;"))
             version = result.fetchone()[0]
             print(f"✅ PostgreSQL: {version[:50]}...")
             return True

@@ -1,10 +1,9 @@
-"""Event Processor - Generate embeddings and extract entities
+"""Event Processor - Generate embeddings and store in Qdrant
 
 Processes events through:
 1. Text cleaning
-2. Entity extraction (NER using spaCy)
-3. Embedding generation (sentence-transformers)
-4. Vector storage (Qdrant)
+2. Embedding generation (sentence-transformers)
+3. Vector storage (Qdrant)
 """
 
 from config.celery_config import celery_app
@@ -97,22 +96,10 @@ def process_event(event_id: int):
         
         # Update event with embedding ID
         event.embedding_id = point_id
-        
-        # Extract entities (placeholder - can add spaCy NER here)
-        # TODO: Add NER extraction
-        # import spacy
-        # nlp = spacy.load("en_core_web_sm")
-        # doc = nlp(event.text)
-        # entities = {
-        #     "locations": [ent.text for ent in doc.ents if ent.label_ == "GPE"],
-        #     "organizations": [ent.text for ent in doc.ents if ent.label_ == "ORG"],
-        #     "persons": [ent.text for ent in doc.ents if ent.label_ == "PERSON"]
-        # }
-        # event.entities = entities
-        
+
         db.commit()
         db.close()
-        
+
         print(f"✅ Processed event {event_id}")
         return {"status": "success", "event_id": event_id, "embedding_id": point_id}
         

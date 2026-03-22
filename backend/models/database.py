@@ -120,28 +120,73 @@ def init_db():
 
 
 def init_timescaledb():
-    """Convert events table to TimescaleDB hypertable"""
+    """Convert events table to TimescaleDB hypertable with better error handling"""
+    from sqlalchemy import text
     try:
         with engine.connect() as conn:
             # Check if TimescaleDB extension exists
-            conn.execute("CREATE EXTENSION IF NOT EXISTS timescaledb CASCADE;")
-            
-            # Convert events table to hypertable
-            conn.execute("""
-                SELECT create_hypertable('events', 'timestamp', 
-                    if_not_exists => TRUE,
-                    chunk_time_interval => INTERVAL '1 day'
+            print("📊 Installing TimescaleDB extension...")
+            conn.execute(text("CREATE EXTENSION IF NOT EXISTS timescaledb CASCADE;"))
+            conn.commit()
+
+            # Check if events table is already a hypertable
+            result = conn.execute(text("""
+                SELECT EXISTS (
+                    SELECT 1 FROM timescaledb_information.hypertables
+                    WHERE hypertable_name = 'events'
                 );
-            """)
-            
-            # Convert commodities table to hypertable
-            conn.execute("""
-                SELECT create_hypertable('commodities', 'timestamp',
-                    if_not_exists => TRUE,
-                    chunk_time_interval => INTERVAL '1 hour'
+            """)).scalar()
+
+            if not result:
+                print("📊 Converting events table to hypertable...")
+                # Convert events table to hypertable (migrate existing data)
+                conn.execute(text("""
+                    SELECT create_hypertable('events', 'timestamp',
+                        if_not_exists => TRUE,
+                        migrate_data => TRUE,
+                        chunk_time_interval => INTERVAL '1 day'
+                    );
+                """))
+                conn.commit()
+                print("✅ Events hypertable created successfully")
+            else:
+                print("ℹ️  Events table already a hypertable")
+
+            # Check if commodities table is already a hypertable
+            result = conn.execute(text("""
+                SELECT EXISTS (
+                    SELECT 1 FROM timescaledb_information.hypertables
+                    WHERE hypertable_name = 'commodities'
                 );
-            """)
-            
-            print("✅ TimescaleDB hypertables configured")
+            """)).scalar()
+
+            if not result:
+                print("📊 Converting commodities table to hypertable...")
+                # Convert commodities table to hypertable (migrate existing data)
+                conn.execute(text("""
+                    SELECT create_hypertable('commodities', 'timestamp',
+                        if_not_exists => TRUE,
+                        migrate_data => TRUE,
+                        chunk_time_interval => INTERVAL '1 hour'
+                    );
+                """))
+                conn.commit()
+                print("✅ Commodities hypertable created successfully")
+            else:
+                print("ℹ️  Commodities table already a hypertable")
+
+            print("✅ TimescaleDB hypertables configured successfully")
+
     except Exception as e:
-        print(f"⚠️ TimescaleDB setup skipped (requires extension): {e}")
+        error_msg = str(e)
+        if "table is not empty" in error_msg:
+            print(f"⚠️  TimescaleDB: Tables contain data. Use 'migrate_data => TRUE' to migrate.")
+        elif "does not exist" in error_msg:
+            print(f"⚠️  TimescaleDB extension not available. Install with: apt install timescaledb-postgresql")
+        elif "already exists" in error_msg:
+            print(f"ℹ️  TimescaleDB: Tables already converted to hypertables")
+        else:
+            print(f"⚠️  TimescaleDB setup error: {error_msg}")
+
+        # Don't fail the whole initialization - regular PostgreSQL still works
+        print("ℹ️  Continuing with regular PostgreSQL (performance may be reduced)")

@@ -13,6 +13,7 @@ from dotenv import load_dotenv
 from config.celery_config import celery_app
 from models.redis_client import is_duplicate, RedisPubSub
 from models.database import SessionLocal, Event
+from services.geo_extractor import extract_location
 
 load_dotenv()
 
@@ -86,7 +87,15 @@ def fetch_news():
             # Parse timestamp
             published = article.get("publishedAt")
             timestamp = datetime.fromisoformat(published.replace("Z", "+00:00")) if published else datetime.utcnow()
-            
+
+            # Extract geo-location
+            geo = extract_location(full_text)
+            lat, lon, place = None, None, None
+            if geo:
+                lat = geo.get("lat")
+                lon = geo.get("lon")
+                place = geo.get("place")
+
             # Create event
             event = Event(
                 source="NewsAPI",
@@ -94,20 +103,28 @@ def fetch_news():
                 url=article.get("url", ""),
                 timestamp=timestamp,
                 bias="Varied",
-                content_hash=content_hash
+                content_hash=content_hash,
+                lat=lat,
+                lon=lon,
+                place=place
             )
-            
+
             db.add(event)
+            db.flush()  # Get event ID
             new_articles += 1
-            
+
             # Publish to stream
             pubsub.publish({
                 "type": "event",
+                "id": event.id,
                 "source": "NewsAPI",
                 "text": full_text[:200] + "..." if len(full_text) > 200 else full_text,
                 "url": event.url,
                 "timestamp": timestamp.isoformat(),
-                "bias": "Varied"
+                "bias": "Varied",
+                "lat": lat,
+                "lon": lon,
+                "place": place
             })
             
             # Queue for processing

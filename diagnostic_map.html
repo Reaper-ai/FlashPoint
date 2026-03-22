@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>FlashPoint Map Diagnostic</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        body {
+            font-family: monospace;
+            margin: 0;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #00ff00;
+        }
+        #map {
+            width: 100%;
+            height: 600px;
+            border: 2px solid #00ff00;
+        }
+        #log {
+            margin-top: 20px;
+            padding: 10px;
+            background: #0a0a0a;
+            border: 1px solid #00ff00;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .log-entry {
+            margin: 5px 0;
+        }
+        .success { color: #00ff00; }
+        .error { color: #ff0000; }
+        .info { color: #00ffff; }
+    </style>
+</head>
+<body>
+    <h1>🗺️ FlashPoint Map Diagnostic</h1>
+    <div id="map"></div>
+    <div id="log"></div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        const logDiv = document.getElementById('log');
+        function log(message, type = 'info') {
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            logDiv.appendChild(entry);
+            logDiv.scrollTop = logDiv.scrollHeight;
+            console.log(message);
+        }
+
+        // Test 1: Initialize map
+        log('Initializing Leaflet map...', 'info');
+        let map, markerLayer;
+        try {
+            map = L.map('map', {
+                center: [30, 20],
+                zoom: 2,
+                zoomControl: true
+            });
+
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+                attribution: '&copy; OpenStreetMap',
+                subdomains: 'abcd',
+                maxZoom: 19
+            }).addTo(map);
+
+            markerLayer = L.layerGroup().addTo(map);
+            log('✅ Map initialized successfully', 'success');
+        } catch (error) {
+            log(`❌ Map initialization failed: ${error.message}`, 'error');
+        }
+
+        // Test 2: Fetch events from API
+        log('Fetching events from API...', 'info');
+        fetch('/api/events/recent?limit=50')
+            .then(response => {
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                return response.json();
+            })
+            .then(data => {
+                log(`✅ API response received: ${data.count} events`, 'success');
+
+                const withGeo = data.events.filter(e => e.lat && e.lon);
+                log(`   Events with coordinates: ${withGeo.length}`, 'info');
+
+                // Test 3: Add markers to map
+                if (withGeo.length === 0) {
+                    log('⚠️  No events with coordinates found', 'error');
+                    return;
+                }
+
+                withGeo.forEach((event, index) => {
+                    try {
+                        const circle = L.circle([event.lat, event.lon], {
+                            color: '#00ff00',
+                            fillColor: '#00ff00',
+                            fillOpacity: 0.4,
+                            radius: 50000
+                        }).addTo(markerLayer);
+
+                        circle.bindPopup(`
+                            <strong>${event.place || 'Unknown'}</strong><br>
+                            ${event.source}<br>
+                            ${event.text.substring(0, 100)}...
+                        `);
+
+                        if (index === 0) {
+                            log(`✅ First marker added at [${event.lat}, ${event.lon}]`, 'success');
+                        }
+                    } catch (error) {
+                        log(`❌ Failed to add marker ${index}: ${error.message}`, 'error');
+                    }
+                });
+
+                log(`✅ Added ${withGeo.length} markers to map`, 'success');
+                log('🎉 DIAGNOSTIC COMPLETE - Map should be visible with markers', 'success');
+            })
+            .catch(error => {
+                log(`❌ API fetch failed: ${error.message}`, 'error');
+            });
+    </script>
+</body>
+</html>

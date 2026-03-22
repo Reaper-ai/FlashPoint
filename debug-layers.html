@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FlashPoint - Debug Layers</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        body { font-family: monospace; background: #000; color: #0f0; margin: 0; padding: 20px; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .debug-info { background: #111; border: 1px solid #0f0; padding: 10px; margin: 10px 0; }
+        .controls { margin: 10px 0; }
+        .controls button {
+            background: #003300; color: #0f0; border: 1px solid #0f0;
+            padding: 5px 10px; margin: 0 5px; cursor: pointer; font-family: monospace;
+        }
+        .controls button:hover { background: #006600; }
+        #map { height: 400px; border: 1px solid #0f0; }
+        .log { background: #000; height: 200px; overflow-y: scroll; padding: 5px; border: 1px solid #0f0; font-size: 11px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 FlashPoint Layer Debug</h1>
+
+        <div class="debug-info">
+            <h3>📊 Layer Status</h3>
+            <div id="layerStatus">Loading...</div>
+        </div>
+
+        <div class="controls">
+            <button onclick="checkLayers()">🔍 Check All Layers</button>
+            <button onclick="testConflictLayer()">⚔️ Test Conflict Layer</button>
+            <button onclick="testHotspotLayer()">📍 Test Hotspot Layer</button>
+            <button onclick="testAircraftLayers()">✈️ Test Aircraft Layers</button>
+            <button onclick="testTankerLayer()">🛢️ Test Tanker Layer</button>
+        </div>
+
+        <div class="controls">
+            <button onclick="simulateRealData()">📡 Simulate Real Data</button>
+            <button onclick="clearAllLayers()">🗑️ Clear All</button>
+            <button onclick="clearLog()">Clear Log</button>
+        </div>
+
+        <div id="map"></div>
+
+        <div class="debug-info">
+            <h3>📝 Debug Log</h3>
+            <div id="debugLog" class="log"></div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script type="module">
+        import { initMap, renderConflictMarkers, updateMapHotspot } from './frontend/web/js/map.js?v=4';
+
+        // Capture all console output
+        const originalLog = console.log;
+        const originalError = console.error;
+
+        function addToLog(msg, isError = false) {
+            originalLog(msg);
+            const logDiv = document.getElementById('debugLog');
+            if (logDiv) {
+                const time = new Date().toLocaleTimeString();
+                const color = isError ? '#f00' : '#0f0';
+                logDiv.innerHTML += `<div style="color: ${color}">[${time}] ${msg}</div>`;
+                logDiv.scrollTop = logDiv.scrollHeight;
+            }
+        }
+
+        console.log = addToLog;
+        console.error = (msg) => addToLog(msg, true);
+
+        // Initialize map
+        addToLog("🚀 Starting layer debug test...");
+        const mapReady = initMap();
+        addToLog(`🗺️ Map initialization: ${mapReady ? 'SUCCESS' : 'FAILED'}`);
+
+        // Update layer status every 2 seconds
+        function updateLayerStatus() {
+            const layers = window.FlashPointMap || {};
+            const statusDiv = document.getElementById('layerStatus');
+
+            const status = {
+                map: !!layers.map,
+                markerLayer: !!layers.markerLayer,
+                militaryAircraftLayer: !!layers.militaryAircraftLayer,
+                civilianAircraftLayer: !!layers.civilianAircraftLayer,
+                oilTankerLayer: !!layers.oilTankerLayer,
+                conflictLayer: !!layers.conflictLayer,
+                hotspotLayer: !!layers.hotspotLayer
+            };
+
+            const counts = {
+                military: layers.militaryAircraftLayer ? layers.militaryAircraftLayer.getLayers().length : 0,
+                civilian: layers.civilianAircraftLayer ? layers.civilianAircraftLayer.getLayers().length : 0,
+                tankers: layers.oilTankerLayer ? layers.oilTankerLayer.getLayers().length : 0,
+                conflicts: layers.conflictLayer ? layers.conflictLayer.getLayers().length : 0,
+                hotspots: layers.hotspotLayer ? layers.hotspotLayer.getLayers().length : 0
+            };
+
+            statusDiv.innerHTML = `
+                <strong>Layer Availability:</strong><br>
+                🗺️ Map: ${status.map ? '✅' : '❌'}<br>
+                🎯 Military Aircraft: ${status.militaryAircraftLayer ? '✅' : '❌'} (${counts.military})<br>
+                ✈️ Civilian Aircraft: ${status.civilianAircraftLayer ? '✅' : '❌'} (${counts.civilian})<br>
+                🛢️ Oil Tankers: ${status.oilTankerLayer ? '✅' : '❌'} (${counts.tankers})<br>
+                ⚔️ Conflicts: ${status.conflictLayer ? '✅' : '❌'} (${counts.conflicts})<br>
+                📍 Hotspots: ${status.hotspotLayer ? '✅' : '❌'} (${counts.hotspots})
+            `;
+        }
+
+        setInterval(updateLayerStatus, 2000);
+        setTimeout(updateLayerStatus, 500);
+
+        // Test functions
+        window.checkLayers = function() {
+            addToLog("🔍 Checking all layer availability...");
+            const layers = window.FlashPointMap || {};
+
+            Object.keys(layers).forEach(key => {
+                const layer = layers[key];
+                if (layer && typeof layer.getLayers === 'function') {
+                    addToLog(`${key}: ${layer.getLayers().length} markers`);
+                } else {
+                    addToLog(`${key}: ${layer ? 'Available' : 'Missing'}`);
+                }
+            });
+        };
+
+        window.testConflictLayer = function() {
+            addToLog("⚔️ Testing conflict layer...");
+
+            const mockConflicts = [
+                { name: "Test Conflict A", lat: 40.0, lon: -74.0, severity: "high", status: "Active" },
+                { name: "Test Conflict B", lat: 41.0, lon: -75.0, severity: "critical", status: "Escalating" }
+            ];
+
+            // Test with retry logic like the real conflicts.js
+            const maxAttempts = 5;
+            let attempts = 0;
+
+            function tryRender() {
+                attempts++;
+                const { map, conflictLayer } = window.FlashPointMap || {};
+
+                if (map && conflictLayer) {
+                    addToLog("⚔️ Conflict layer ready, rendering test conflicts...");
+                    renderConflictMarkers(mockConflicts);
+                    return;
+                }
+
+                if (attempts < maxAttempts) {
+                    addToLog(`⚔️ Conflict layer not ready, attempt ${attempts}/${maxAttempts}`);
+                    setTimeout(tryRender, 500);
+                } else {
+                    addToLog("❌ Failed to render test conflicts - layer not ready", true);
+                }
+            }
+
+            tryRender();
+        };
+
+        window.testHotspotLayer = function() {
+            addToLog("📍 Testing hotspot layer...");
+
+            const mockEvents = [
+                { id: 1, lat: 42.0, lon: -76.0, place: "Test Location A", text: "Sample hotspot event alpha" },
+                { id: 2, lat: 43.0, lon: -77.0, place: "Test Location B", text: "Sample hotspot event beta" }
+            ];
+
+            // Test with retry logic like the real feed.js
+            mockEvents.forEach(event => {
+                const maxAttempts = 5;
+                let attempts = 0;
+
+                function tryRender() {
+                    attempts++;
+                    const { map, hotspotLayer } = window.FlashPointMap || {};
+
+                    if (map && hotspotLayer) {
+                        addToLog(`📍 Hotspot layer ready, rendering ${event.place}...`);
+                        updateMapHotspot(event);
+                        return;
+                    }
+
+                    if (attempts < maxAttempts) {
+                        addToLog(`📍 Hotspot layer not ready, attempt ${attempts}/${maxAttempts}`);
+                        setTimeout(tryRender, 500);
+                    } else {
+                        addToLog(`❌ Failed to render hotspot ${event.place}`, true);
+                    }
+                }
+
+                tryRender();
+            });
+        };
+
+        window.testAircraftLayers = function() {
+            addToLog("✈️ Testing aircraft layers...");
+
+            const { militaryAircraftLayer, civilianAircraftLayer } = window.FlashPointMap || {};
+
+            if (!militaryAircraftLayer || !civilianAircraftLayer) {
+                addToLog("❌ Aircraft layers not available", true);
+                return;
+            }
+
+            // Test military aircraft
+            const militaryMarker = L.circleMarker([44.0, -78.0], {
+                color: '#ff3333',
+                fillColor: '#ff3333',
+                fillOpacity: 0.8,
+                radius: 10,
+                weight: 3
+            });
+            militaryMarker.bindPopup("🎯 TEST MILITARY AIRCRAFT");
+            militaryMarker.addTo(militaryAircraftLayer);
+
+            // Test civilian aircraft
+            const civilianMarker = L.circleMarker([45.0, -79.0], {
+                color: '#0099ff',
+                fillColor: '#0099ff',
+                fillOpacity: 0.8,
+                radius: 6,
+                weight: 3
+            });
+            civilianMarker.bindPopup("✈️ TEST CIVILIAN AIRCRAFT");
+            civilianMarker.addTo(civilianAircraftLayer);
+
+            addToLog("✅ Added test military and civilian aircraft markers");
+        };
+
+        window.testTankerLayer = function() {
+            addToLog("🛢️ Testing tanker layer...");
+
+            const { oilTankerLayer } = window.FlashPointMap || {};
+
+            if (!oilTankerLayer) {
+                addToLog("❌ Oil tanker layer not available", true);
+                return;
+            }
+
+            const tankerMarker = L.circleMarker([46.0, -80.0], {
+                color: '#ff8800',
+                fillColor: '#ff8800',
+                fillOpacity: 0.8,
+                radius: 9,
+                weight: 3
+            });
+            tankerMarker.bindPopup("🛢️ TEST OIL TANKER");
+            tankerMarker.addTo(oilTankerLayer);
+
+            addToLog("✅ Added test oil tanker marker");
+        };
+
+        window.simulateRealData = function() {
+            addToLog("📡 Simulating real data timing...");
+
+            // Simulate the actual timing sequence from the real app
+            setTimeout(() => testConflictLayer(), 1500);  // conflicts.js delay
+            setTimeout(() => testHotspotLayer(), 1000);   // feed.js delay
+            setTimeout(() => testAircraftLayers(), 2000); // tracking.js delay
+            setTimeout(() => testTankerLayer(), 2000);    // tracking.js delay
+        };
+
+        window.clearAllLayers = function() {
+            const layers = window.FlashPointMap || {};
+            let totalCleared = 0;
+
+            ['militaryAircraftLayer', 'civilianAircraftLayer', 'oilTankerLayer', 'conflictLayer', 'hotspotLayer'].forEach(layerName => {
+                const layer = layers[layerName];
+                if (layer && typeof layer.clearLayers === 'function') {
+                    const count = layer.getLayers().length;
+                    layer.clearLayers();
+                    totalCleared += count;
+                }
+            });
+
+            addToLog(`🗑️ Cleared ${totalCleared} markers from all layers`);
+        };
+
+        window.clearLog = function() {
+            document.getElementById('debugLog').innerHTML = '';
+        };
+
+        addToLog("✅ Layer debug test ready!");
+        addToLog("🎮 Try the test buttons to verify each layer works");
+    </script>
+</body>
+</html>

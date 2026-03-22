@@ -7,6 +7,7 @@ Runs as a long-lived Celery task.
 from config.celery_config import celery_app
 from models.database import SessionLocal, Event
 from models.redis_client import is_duplicate, RedisPubSub
+from services.geo_extractor import extract_location
 import hashlib
 from datetime import datetime
 import os
@@ -75,7 +76,15 @@ async def telegram_stream_async():
                 # Get sender info
                 sender = await event.get_sender()
                 username = sender.username if sender else "Unknown"
-                
+
+                # Extract geo-location
+                geo = extract_location(text)
+                lat, lon, place = None, None, None
+                if geo:
+                    lat = geo.get("lat")
+                    lon = geo.get("lon")
+                    place = geo.get("place")
+
                 # Create event
                 db = SessionLocal()
                 event_obj = Event(
@@ -84,23 +93,31 @@ async def telegram_stream_async():
                     url=f"https://t.me/{username}/{event.id}",
                     timestamp=datetime.fromtimestamp(event.date.timestamp()),
                     bias=bias_tags.get(username, "Independent"),
-                    content_hash=content_hash
+                    content_hash=content_hash,
+                    lat=lat,
+                    lon=lon,
+                    place=place
                 )
-                
+
                 db.add(event_obj)
-                db.commit()
+                db.flush()  # Get event ID
                 event_id = event_obj.id
+                db.commit()
                 db.close()
-                
+
                 # Publish to stream
                 pubsub = RedisPubSub()
                 pubsub.publish({
                     "type": "event",
+                    "id": event_id,
                     "source": f"Telegram/{username}",
                     "text": text[:200] + "..." if len(text) > 200 else text,
                     "url": event_obj.url,
                     "timestamp": event_obj.timestamp.isoformat(),
-                    "bias": event_obj.bias
+                    "bias": event_obj.bias,
+                    "lat": lat,
+                    "lon": lon,
+                    "place": place
                 })
                 
                 # Queue for processing

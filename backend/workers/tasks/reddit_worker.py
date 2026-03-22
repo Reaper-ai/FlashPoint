@@ -11,6 +11,7 @@ import json
 from config.celery_config import celery_app
 from models.redis_client import is_duplicate, RedisPubSub
 from models.database import SessionLocal, Event
+from services.geo_extractor import extract_location
 
 
 def load_reddit_config():
@@ -79,7 +80,15 @@ def fetch_reddit():
             # Check duplicate
             if is_duplicate(content_hash):
                 continue
-            
+
+            # Extract geo-location
+            geo = extract_location(full_text)
+            lat, lon, place = None, None, None
+            if geo:
+                lat = geo.get("lat")
+                lon = geo.get("lon")
+                place = geo.get("place")
+
             # Create event
             event = Event(
                 source="Reddit",
@@ -87,20 +96,28 @@ def fetch_reddit():
                 url=f"https://reddit.com{post.get('permalink')}",
                 timestamp=datetime.fromtimestamp(post.get('created_utc', 0)),
                 bias="Varied",
-                content_hash=content_hash
+                content_hash=content_hash,
+                lat=lat,
+                lon=lon,
+                place=place
             )
-            
+
             db.add(event)
+            db.flush()  # Get event ID
             new_posts += 1
-            
+
             # Publish to stream
             pubsub.publish({
                 "type": "event",
+                "id": event.id,
                 "source": "Reddit",
                 "text": full_text[:200] + "..." if len(full_text) > 200 else full_text,
                 "url": event.url,
                 "timestamp": event.timestamp.isoformat(),
-                "bias": "Varied"
+                "bias": "Varied",
+                "lat": lat,
+                "lon": lon,
+                "place": place
             })
             
             # Queue for processing

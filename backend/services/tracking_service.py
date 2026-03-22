@@ -1,4 +1,4 @@
-"""Real-time tracking service
+"""Real-time tracking service with caching
 - Ships: aisstream.io WebSocket (free)
 - Flights: OpenSky Network REST API (free, no key needed)
 """
@@ -8,8 +8,10 @@ import json
 import os
 import httpx
 import websockets
+import time
 from datetime import datetime
 from typing import Dict, List
+from functools import lru_cache
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -17,6 +19,11 @@ load_dotenv()
 AISSTREAM_KEY = os.getenv("AISSTREAM_API_KEY", "")
 OPENSKY_USER  = os.getenv("OPENSKY_USERNAME", "")
 OPENSKY_PASS  = os.getenv("OPENSKY_PASSWORD", "")
+
+# Caching configuration
+CACHE_TTL = 120  # 2 minutes cache for tracking data
+flight_cache = {"data": [], "timestamp": 0}
+ship_cache = {"data": [], "timestamp": 0}
 
 # Military callsign prefixes
 MILITARY_CALLSIGN_PATTERNS = [
@@ -102,7 +109,14 @@ async def stream_ships():
 
 
 async def fetch_flights(region: str = "global") -> List[dict]:
-    """Fetch flights from OpenSky Network — free, no key needed."""
+    """Fetch flights from OpenSky Network with caching — free, no key needed."""
+
+    # Check cache first
+    current_time = time.time()
+    if (current_time - flight_cache["timestamp"]) < CACHE_TTL and flight_cache["data"]:
+        print(f"🛩️ Using cached flight data ({len(flight_cache['data'])} flights)")
+        return flight_cache["data"]
+
     # Bounding boxes for key regions
     REGIONS = {
         "middle_east": (12.0, 25.0, 42.0, 65.0),
@@ -115,7 +129,7 @@ async def fetch_flights(region: str = "global") -> List[dict]:
 
     try:
         auth = (OPENSKY_USER, OPENSKY_PASS) if OPENSKY_USER else None
-        async with httpx.AsyncClient(timeout=15.0) as client:
+        async with httpx.AsyncClient(timeout=10.0) as client:  # Reduced timeout
             resp = await client.get(
                 "https://opensky-network.org/api/states/all",
                 params={"lamin": lamin, "lomin": lomin,
@@ -126,7 +140,7 @@ async def fetch_flights(region: str = "global") -> List[dict]:
             data = resp.json()
 
         flights = []
-        for state in (data.get("states") or []):
+        for state in (data.get("states") or [])[:200]:  # Limit to 200 flights
             if len(state) < 17:
                 continue
             icao24   = state[0] or ""
@@ -162,20 +176,41 @@ async def fetch_flights(region: str = "global") -> List[dict]:
         for f in flights:
             _flights[f["icao24"]] = f
 
+        # Update cache
+        flight_cache["data"] = flights
+        flight_cache["timestamp"] = current_time
+
         military_count = sum(1 for f in flights if f["military"])
-        print(f"✅ OpenSky: {len(flights)} flights, {military_count} military")
+        print(f"✅ OpenSky: {len(flights)} flights, {military_count} military (cached)")
         return flights
 
     except Exception as e:
         print(f"⚠️ OpenSky error: {e}")
+        # Return cached data if available, otherwise empty list
+        if flight_cache["data"]:
+            print(f"🛩️ Using cached flight data due to error ({len(flight_cache['data'])} flights)")
+            return flight_cache["data"]
         return list(_flights.values())
 
 
 def get_ships(tankers_only: bool = False) -> List[dict]:
-    ships = list(_ships.values())
+    """Get cached ship data with optional tanker filtering"""
+
+    # Check cache first
+    current_time = time.time()
+    if (current_time - ship_cache["timestamp"]) < CACHE_TTL and ship_cache["data"]:
+        ships = ship_cache["data"]
+        print(f"🚢 Using cached ship data ({len(ships)} ships)")
+    else:
+        ships = list(_ships.values())
+        # Update cache
+        ship_cache["data"] = ships
+        ship_cache["timestamp"] = current_time
+
     if tankers_only:
         ships = [s for s in ships if s.get("is_tanker")]
-    return ships[:500]  # cap at 500 for frontend performance
+
+    return ships[:100]  # Reduced from 500 to 100 for performance
 
 
 def get_flights(military_only: bool = False) -> List[dict]:

@@ -12,6 +12,7 @@ from pathlib import Path
 from config.celery_config import celery_app
 from models.redis_client import is_duplicate, RedisPubSub
 from models.database import SessionLocal, Event
+from services.geo_extractor import extract_location
 import sys
 sys.path.append(str(Path(__file__).parent.parent))
 
@@ -89,7 +90,15 @@ def fetch_single_rss(feed_config: dict):
             # Parse timestamp
             published = entry.get("published_parsed")
             timestamp = datetime(*published[:6]) if published else datetime.utcnow()
-            
+
+            # Extract geo-location
+            geo = extract_location(text)
+            lat, lon, place = None, None, None
+            if geo:
+                lat = geo.get("lat")
+                lon = geo.get("lon")
+                place = geo.get("place")
+
             # Create event
             event = Event(
                 source=name,
@@ -97,20 +106,28 @@ def fetch_single_rss(feed_config: dict):
                 url=link,
                 timestamp=timestamp,
                 bias=bias,
-                content_hash=content_hash
+                content_hash=content_hash,
+                lat=lat,
+                lon=lon,
+                place=place
             )
-            
+
             db.add(event)
+            db.flush()  # Get event ID
             new_items += 1
-            
+
             # Publish to real-time stream
             pubsub.publish({
                 "type": "event",
+                "id": event.id,
                 "source": name,
                 "text": text[:200] + "..." if len(text) > 200 else text,
                 "url": link,
                 "timestamp": timestamp.isoformat(),
-                "bias": bias
+                "bias": bias,
+                "lat": lat,
+                "lon": lon,
+                "place": place
             })
             
             # Queue for processing (embeddings, NER)

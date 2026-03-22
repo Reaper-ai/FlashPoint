@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FlashPoint - Timing Test</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="frontend/web/styles.css" />
+    <style>
+        .test-section { border: 1px solid #333; padding: 10px; margin: 10px 0; }
+        .log-area { background: #000; color: #0f0; font-family: monospace; height: 300px; overflow-y: scroll; padding: 5px; }
+        .controls { margin: 10px 0; }
+        .controls button { background: #00ff00; color: #000; border: none; padding: 5px 10px; margin: 0 5px; cursor: pointer; }
+    </style>
+</head>
+<body class="cyber-theme">
+    <div class="container">
+        <h1>🔧 FlashPoint Timing Test</h1>
+
+        <div class="test-section">
+            <h3>🗺️ Map Container</h3>
+            <div id="map" style="height: 400px; width: 100%; border: 1px solid #0f0;"></div>
+        </div>
+
+        <div class="controls">
+            <button onclick="testConflictTiming()">Test Conflict Timing</button>
+            <button onclick="testTrackingTiming()">Test Flight/Ship Timing</button>
+            <button onclick="testFeedTiming()">Test Feed Hotspot Timing</button>
+            <button onclick="clearLog()">Clear Log</button>
+            <button onclick="FlashPointDebug.clearAllMarkers()">Clear All Markers</button>
+        </div>
+
+        <div class="test-section">
+            <h3>📝 Test Log</h3>
+            <div id="testLog" class="log-area"></div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script type="module">
+        import { initMap } from './frontend/web/js/map.js?v=1';
+        import './frontend/web/js/debug.js?v=1';
+
+        // Mock API data for testing
+        const mockConflicts = [
+            { name: "Test Conflict 1", lat: 40.7128, lon: -74.0060, severity: "high", status: "Active" },
+            { name: "Test Conflict 2", lat: 34.0522, lon: -118.2437, severity: "critical", status: "Escalating" }
+        ];
+
+        const mockFlights = [
+            { callsign: "TEST001", lat: 51.5074, lon: -0.1278, altitude: 35000, velocity: 250, military: false },
+            { callsign: "MILITARY1", lat: 48.8566, lon: 2.3522, altitude: 40000, velocity: 300, military: true }
+        ];
+
+        const mockShips = [
+            { name: "Test Ship", mmsi: "123456789", lat: 37.7749, lon: -122.4194, speed: 15, course: 90, is_tanker: false },
+            { name: "Oil Tanker", mmsi: "987654321", lat: 25.7617, lon: -80.1918, speed: 12, course: 180, is_tanker: true }
+        ];
+
+        const mockEvents = [
+            { id: 1, lat: 35.6762, lon: 139.6503, place: "Tokyo", text: "Test geo-extracted event in Tokyo" },
+            { id: 2, lat: 55.7558, lon: 37.6176, place: "Moscow", text: "Test geo-extracted event in Moscow" }
+        ];
+
+        // Override console.log to capture in test area
+        const originalLog = console.log;
+        const originalError = console.error;
+
+        function logToTest(msg, isError = false) {
+            originalLog(msg);
+            const logArea = document.getElementById('testLog');
+            if (logArea) {
+                const timestamp = new Date().toLocaleTimeString();
+                const color = isError ? '#f00' : '#0f0';
+                logArea.innerHTML += `<div style="color: ${color}">[${timestamp}] ${msg}</div>`;
+                logArea.scrollTop = logArea.scrollHeight;
+            }
+        }
+
+        console.log = logToTest;
+        console.error = (msg) => logToTest(msg, true);
+
+        // Initialize immediately
+        logToTest("🚀 Starting timing test...");
+        const mapReady = initMap();
+        logToTest(`🗺️ Map initialization: ${mapReady ? 'SUCCESS' : 'FAILED'}`);
+
+        // Test functions
+        window.testConflictTiming = function() {
+            logToTest("🔴 Testing conflict timing logic...");
+
+            // Import and test conflict rendering with timing
+            import('./frontend/web/js/conflicts.js?v=1').then(module => {
+                // Simulate the waitForMapAndRender logic
+                const maxAttempts = 10;
+                let attempts = 0;
+
+                function tryRender() {
+                    attempts++;
+                    const { map, markerLayer } = window.FlashPointMap || {};
+
+                    if (map && markerLayer) {
+                        logToTest("🔴 Map ready for conflicts, rendering...");
+                        // Import map module to get renderConflictMarkers
+                        import('./frontend/web/js/map.js?v=1').then(mapModule => {
+                            mapModule.renderConflictMarkers(mockConflicts);
+                            logToTest("✅ Conflict timing test complete");
+                        });
+                        return;
+                    }
+
+                    if (attempts < maxAttempts) {
+                        logToTest(`🔴 Map not ready for conflicts, attempt ${attempts}/${maxAttempts}`);
+                        setTimeout(tryRender, 500);
+                    } else {
+                        logToTest("❌ Conflict timing test failed - map not ready", true);
+                    }
+                }
+
+                tryRender();
+            });
+        };
+
+        window.testTrackingTiming = function() {
+            logToTest("✈️ Testing flight/ship timing logic...");
+
+            import('./frontend/web/js/tracking.js?v=1').then(module => {
+                // Test flight timing
+                const maxAttempts = 10;
+                let attempts = 0;
+
+                function tryRenderFlights() {
+                    attempts++;
+                    const { map, markerLayer } = window.FlashPointMap || {};
+
+                    if (map && markerLayer) {
+                        logToTest("✈️ Map ready for flights, rendering...");
+                        // Manually create flight markers using the same logic
+                        mockFlights.forEach(flight => {
+                            const color = flight.military ? "#ff3333" : "#0099ff";
+                            const marker = L.circleMarker([flight.lat, flight.lon], {
+                                color: color,
+                                fillColor: color,
+                                fillOpacity: 0.7,
+                                radius: flight.military ? 8 : 5,
+                                weight: 2
+                            });
+                            marker.bindPopup(`✈️ ${flight.callsign}<br>Alt: ${flight.altitude}ft`);
+                            marker.addTo(markerLayer);
+                        });
+
+                        // Test ship timing
+                        mockShips.forEach(ship => {
+                            const color = ship.is_tanker ? "#ff8800" : "#0088ff";
+                            const marker = L.circleMarker([ship.lat, ship.lon], {
+                                color: color,
+                                fillColor: color,
+                                fillOpacity: 0.7,
+                                radius: ship.is_tanker ? 7 : 4,
+                                weight: 2
+                            });
+                            marker.bindPopup(`🚢 ${ship.name}<br>Speed: ${ship.speed} knots`);
+                            marker.addTo(markerLayer);
+                        });
+
+                        logToTest("✅ Flight/Ship timing test complete");
+                        return;
+                    }
+
+                    if (attempts < maxAttempts) {
+                        logToTest(`✈️ Map not ready for flights, attempt ${attempts}/${maxAttempts}`);
+                        setTimeout(tryRenderFlights, 500);
+                    } else {
+                        logToTest("❌ Flight timing test failed", true);
+                    }
+                }
+
+                tryRenderFlights();
+            });
+        };
+
+        window.testFeedTiming = function() {
+            logToTest("📍 Testing feed hotspot timing logic...");
+
+            // Test the new waitForMapAndRenderHotspot logic
+            mockEvents.forEach(event => {
+                const maxAttempts = 10;
+                let attempts = 0;
+
+                function tryRender() {
+                    attempts++;
+                    const { map, markerLayer } = window.FlashPointMap || {};
+
+                    if (map && markerLayer) {
+                        logToTest("📍 Map ready for hotspot, rendering...");
+
+                        // Create hotspot marker
+                        const circle = L.circle([event.lat, event.lon], {
+                            color: '#0066ff',
+                            fillColor: '#0066ff',
+                            fillOpacity: 0.6,
+                            radius: 75000,
+                            weight: 2
+                        });
+
+                        circle.bindPopup(`<strong>${event.place}</strong><br><small>${event.text}</small>`);
+                        circle.addTo(markerLayer);
+
+                        logToTest(`✅ Hotspot marker added for ${event.place}`);
+                        return;
+                    }
+
+                    if (attempts < maxAttempts) {
+                        logToTest(`📍 Map not ready for hotspot, attempt ${attempts}/${maxAttempts}`);
+                        setTimeout(tryRender, 500);
+                    } else {
+                        logToTest("❌ Feed timing test failed", true);
+                    }
+                }
+
+                tryRender();
+            });
+        };
+
+        window.clearLog = function() {
+            document.getElementById('testLog').innerHTML = '';
+        };
+
+        logToTest("✅ Timing test page ready - try the test buttons!");
+    </script>
+</body>
+</html>

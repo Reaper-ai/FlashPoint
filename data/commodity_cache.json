@@ -2,28 +2,28 @@
   "prices": {
     "XAU": {
       "rate": 4492.200195,
-      "timestamp": "2026-03-21T22:51:40.557619",
+      "timestamp": "2026-03-22T16:18:13.511176",
       "unit": "troy oz",
       "name": "Gold"
     },
     "XAG": {
       "rate": 67.938004,
-      "timestamp": "2026-03-21T22:51:40.557619",
+      "timestamp": "2026-03-22T16:18:13.511176",
       "unit": "troy oz",
       "name": "Silver"
     },
     "WTI_USD": {
       "rate": 98.23,
-      "timestamp": "2026-03-21T22:51:40.557619",
+      "timestamp": "2026-03-22T16:18:13.511176",
       "unit": "barrel",
       "name": "WTI Crude Oil"
     },
     "BRENT_USD": {
       "rate": 112.19,
-      "timestamp": "2026-03-21T22:51:40.557619",
+      "timestamp": "2026-03-22T16:18:13.511176",
       "unit": "barrel",
       "name": "Brent Crude Oil"
     }
   },
-  "last_refresh": "2026-03-21T22:51:40.557619"
+  "last_refresh": "2026-03-22T16:18:13.511176"
 }

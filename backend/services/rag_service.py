@@ -14,7 +14,7 @@ import os
 from dotenv import load_dotenv
 
 load_dotenv()
-_MODEL = "openrouter/free"
+OPENROUTER_API_BASE = "https://openrouter.ai/api/v1"
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
 QDRANT_URL = os.getenv("QDRANT_URL", "http://localhost:6333")
 EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL", "all-MiniLM-L6-v2")
@@ -51,10 +51,10 @@ class RAGService:
             embedding=self.embeddings,   # note: "embedding" not "embeddings"
         )
         
-        # Initialize OpenRouter LLM
+        # Initialize OpenRouter LLM - using less busy models
         self.llm = ChatOpenAI(
-            model="meta-llama/llama-3.3-70b-instruct:free",
-            openai_api_base=_MODEL,
+            model="deepseek/deepseek-chat",  # DeepSeek R1 - fast and reliable
+            openai_api_base=OPENROUTER_API_BASE,
             openai_api_key=OPENROUTER_API_KEY,
             temperature=0.7,
             max_tokens=1000,

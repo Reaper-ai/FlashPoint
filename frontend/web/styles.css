@@ -215,14 +215,148 @@ svg path { fill: currentColor !important; }
 
 .report-preview:focus { outline: 2px solid #1a1a1a; }
 
-/* ── MAP ── */
+/* ── MAP OPTIMIZATION ── */
 .map-container {
-  flex: 1; min-height: 0;
-  border-radius: 0;
-  overflow: hidden;
+  flex: 1;
+  min-height: 500px;
+  max-height: calc(100vh - 120px);
+  width: 100%;
+  position: relative;
   border: 2px solid #1a1a1a;
-  background: #d8d3c3;
-  filter: grayscale(40%) sepia(20%);
+  background: #f5f5f5;
+  overflow: hidden;
+  /* GPU acceleration for smooth rendering */
+  transform: translateZ(0);
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  will-change: transform;
+}
+
+#map {
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 500px;
+  position: relative;
+  z-index: 1;
+  /* Optimize tile rendering */
+  image-rendering: optimizeSpeed;
+  image-rendering: -webkit-optimize-contrast;
+}
+
+/* Custom Leaflet popup styles */
+.leaflet-popup-content-wrapper {
+  background: #1a1a1a !important;
+  color: #ffffff !important;
+  border: 2px solid #cc0000 !important;
+  border-radius: 0 !important;
+  font-family: 'JetBrains Mono', monospace !important;
+  font-size: 12px !important;
+  box-shadow: 4px 4px 8px rgba(0,0,0,0.5) !important;
+}
+
+.leaflet-popup-tip {
+  background: #1a1a1a !important;
+  border: 2px solid #cc0000 !important;
+  border-top: none !important;
+  border-radius: 0 !important;
+}
+
+.map-popup {
+  padding: 8px;
+  min-width: 200px;
+}
+
+.popup-title {
+  font-weight: bold;
+  font-size: 14px;
+  margin-bottom: 4px;
+  color: #ffffff;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.popup-stats {
+  color: #00ff88;
+  font-size: 12px;
+  margin-bottom: 6px;
+  font-weight: bold;
+}
+
+.popup-latest {
+  font-size: 11px;
+  color: #cccccc;
+  line-height: 1.4;
+}
+
+.conflict-popup {
+  padding: 6px;
+}
+
+.conflict-title {
+  font-weight: bold;
+  font-size: 13px;
+  margin-bottom: 4px;
+  text-transform: uppercase;
+}
+
+.conflict-status, .conflict-severity {
+  font-size: 11px;
+  margin-bottom: 2px;
+}
+
+/* Leaflet controls cyber styling */
+.leaflet-control-zoom {
+  border: 2px solid #1a1a1a !important;
+  border-radius: 0 !important;
+  box-shadow: 2px 2px 4px rgba(0,0,0,0.3) !important;
+}
+
+.leaflet-control-zoom a {
+  background: #1a1a1a !important;
+  color: #ffffff !important;
+  border: none !important;
+  font-family: 'JetBrains Mono', monospace !important;
+  font-weight: bold !important;
+  width: 30px !important;
+  height: 30px !important;
+  line-height: 28px !important;
+}
+
+.leaflet-control-zoom a:hover {
+  background: #cc0000 !important;
+  color: #ffffff !important;
+}
+
+/* CRITICAL: Ensure Leaflet markers are visible */
+.leaflet-marker-pane,
+.leaflet-marker-pane * {
+  visibility: visible !important;
+  opacity: 1 !important;
+  z-index: 1000 !important;
+}
+
+.leaflet-overlay-pane {
+  z-index: 400 !important;
+}
+
+.leaflet-overlay-pane svg,
+.leaflet-overlay-pane canvas {
+  visibility: visible !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+}
+
+/* Force Leaflet circles/paths to be visible */
+.leaflet-overlay-pane path {
+  visibility: visible !important;
+  opacity: 1 !important;
+  fill-opacity: 0.6 !important;
+  stroke-opacity: 1 !important;
+}
+
+.leaflet-interactive {
+  cursor: pointer !important;
+  visibility: visible !important;
 }
 
 .balance-labels {
@@ -272,6 +406,7 @@ svg path { fill: currentColor !important; }
 .chat-history::-webkit-scrollbar-track { background: #ddd8cc; }
 .chat-history::-webkit-scrollbar-thumb { background: #999; border-radius: 0; }
 
+.chat-msg,
 .chat-bubble {
   max-width: 90%;
   padding: 9px 13px;
@@ -281,6 +416,7 @@ svg path { fill: currentColor !important; }
   word-break: break-word;
 }
 
+.chat-msg--user,
 .chat-bubble.user {
   align-self: flex-end;
   background: #1a1a1a;
@@ -288,12 +424,23 @@ svg path { fill: currentColor !important; }
   border: none;
 }
 
+.chat-msg--assistant,
 .chat-bubble.assistant {
   align-self: flex-start;
   background: #f5f2e8;
   border: 1px solid #bbb;
   border-left: 4px solid #1a1a1a;
   color: #1a1a1a;
+}
+
+.chat-msg--system,
+.chat-bubble.system {
+  align-self: center;
+  background: #e8e4d8;
+  border: 1px solid #999;
+  color: #555;
+  font-size: 0.75rem;
+  text-align: center;
 }
 
 .chat-bubble.thinking {
@@ -304,6 +451,20 @@ svg path { fill: currentColor !important; }
   color: #777;
   font-style: italic;
   border-radius: 0;
+}
+
+.chat-role {
+  display: block;
+  font-weight: 700;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 4px;
+  opacity: 0.8;
+}
+
+.chat-content {
+  display: block;
 }
 
 .chat-form { display: flex; gap: 0; flex-shrink: 0; }

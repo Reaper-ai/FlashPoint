@@ -4,6 +4,7 @@ import asyncio
 import json
 import logging
 from collections import deque
+from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Any, AsyncGenerator, Dict, List
 
@@ -20,9 +21,14 @@ from services.report_service import generate_pdf_bytes, generate_sitrep
 from services.commodity_service import get_commodity_service
 from services.conflict_service import get_conflict_service
 from services.rag_service import get_rag_service
-from services.tracking_service import fetch_flights, get_ships, get_flights
+from services.tracking_service import fetch_flights, get_ships, get_flights, stream_ships
 
 logger = logging.getLogger(__name__)
+
+_FRONTEND_DIR = Path(__file__).resolve().parent.parent / "frontend" / "web"
+_ASSETS_DIR   = Path(__file__).resolve().parent.parent / "frontend" / "assets"
+
+latest_news: deque[Dict[str, Any]] = deque(maxlen=100)
 
 @asynccontextmanager
 async def lifespan(app):
@@ -38,14 +44,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-_FRONTEND_DIR = Path(__file__).resolve().parent.parent / "frontend" / "web"
-_ASSETS_DIR   = Path(__file__).resolve().parent.parent / "frontend" / "assets"
-
-latest_news: deque[Dict[str, Any]] = deque(maxlen=100)
-
-from contextlib import asynccontextmanager
-from services.tracking_service import stream_ships
 
 # ── Health ────────────────────────────────────────────────────────────
 
@@ -235,15 +233,25 @@ async def receive_stream(data: Dict[str, Any]):
 
 
 @app.get("/api/tracking/flights", tags=["tracking"])
-async def get_flight_data(military_only: bool = False):
+async def get_flight_data(military_only: bool = False, limit: int = 50):
+    """Get flight tracking data (limited and cached)"""
     flights = await fetch_flights()
     if military_only:
         flights = [f for f in flights if f.get("military")]
+
+    # Limit results to prevent frontend lag
+    flights = flights[:limit]
+
     return {"success": True, "count": len(flights), "flights": flights}
 
 @app.get("/api/tracking/ships", tags=["tracking"])
-async def get_ship_data(tankers_only: bool = False):
+async def get_ship_data(tankers_only: bool = False, limit: int = 100):
+    """Get ship tracking data (limited and cached)"""
     ships = get_ships(tankers_only)
+
+    # Limit results to prevent frontend lag
+    ships = ships[:limit]
+
     return {"success": True, "count": len(ships), "ships": ships}
 
 # ── Static mount — MUST BE LAST ───────────────────────────────────────

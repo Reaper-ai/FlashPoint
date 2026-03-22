@@ -1,6 +1,202 @@
 {
-  "conflicts": [],
+  "conflicts": [
+    {
+      "id": 1,
+      "name": "Russia-Ukraine War",
+      "region": "Europe",
+      "status": "Worsening",
+      "impact_on_us": "Critical",
+      "severity": 9,
+      "coordinates": {
+        "lat": 48.5,
+        "lng": 35.0
+      },
+      "description": "Full-scale Russian invasion of Ukraine ongoing since February 2022."
+    },
+    {
+      "id": 2,
+      "name": "Israel-Hamas War",
+      "region": "Middle East",
+      "status": "Worsening",
+      "impact_on_us": "Critical",
+      "severity": 9,
+      "coordinates": {
+        "lat": 31.5,
+        "lng": 34.5
+      },
+      "description": "Conflict in Gaza following October 7 2023 attacks."
+    },
+    {
+      "id": 3,
+      "name": "Sudan Civil War",
+      "region": "Africa",
+      "status": "Worsening",
+      "impact_on_us": "Significant",
+      "severity": 8,
+      "coordinates": {
+        "lat": 15.6,
+        "lng": 32.5
+      },
+      "description": "RSF vs SAF conflict causing major humanitarian crisis in Darfur."
+    },
+    {
+      "id": 4,
+      "name": "Yemen Conflict",
+      "region": "Middle East",
+      "status": "Unchanging",
+      "impact_on_us": "Significant",
+      "severity": 7,
+      "coordinates": {
+        "lat": 15.5,
+        "lng": 44.0
+      },
+      "description": "Houthi attacks on Red Sea shipping continuing."
+    },
+    {
+      "id": 5,
+      "name": "Myanmar Civil War",
+      "region": "Asia",
+      "status": "Worsening",
+      "impact_on_us": "Limited",
+      "severity": 7,
+      "coordinates": {
+        "lat": 21.9,
+        "lng": 96.0
+      },
+      "description": "Military junta fighting resistance coalition forces."
+    },
+    {
+      "id": 6,
+      "name": "Taiwan Strait Tensions",
+      "region": "Asia",
+      "status": "Unchanging",
+      "impact_on_us": "Critical",
+      "severity": 7,
+      "coordinates": {
+        "lat": 23.7,
+        "lng": 121.0
+      },
+      "description": "PLA military exercises near Taiwan continuing."
+    },
+    {
+      "id": 7,
+      "name": "Iran Nuclear Standoff",
+      "region": "Middle East",
+      "status": "Worsening",
+      "impact_on_us": "Critical",
+      "severity": 8,
+      "coordinates": {
+        "lat": 32.4,
+        "lng": 53.7
+      },
+      "description": "Iran enrichment at 60%, IAEA access restricted."
+    },
+    {
+      "id": 8,
+      "name": "Sahel Insurgency",
+      "region": "Africa",
+      "status": "Worsening",
+      "impact_on_us": "Limited",
+      "severity": 6,
+      "coordinates": {
+        "lat": 14.0,
+        "lng": 2.0
+      },
+      "description": "Jihadist insurgency across Mali, Burkina Faso, Niger."
+    },
+    {
+      "id": 9,
+      "name": "North Korea Provocations",
+      "region": "Asia",
+      "status": "Worsening",
+      "impact_on_us": "Critical",
+      "severity": 7,
+      "coordinates": {
+        "lat": 39.0,
+        "lng": 127.0
+      },
+      "description": "Ballistic missile tests and nuclear program expansion."
+    },
+    {
+      "id": 10,
+      "name": "DRC Conflict",
+      "region": "Africa",
+      "status": "Worsening",
+      "impact_on_us": "Limited",
+      "severity": 7,
+      "coordinates": {
+        "lat": -4.0,
+        "lng": 21.8
+      },
+      "description": "M23 advances in eastern DRC backed by Rwanda."
+    },
+    {
+      "id": 11,
+      "name": "Ethiopia-Tigray",
+      "region": "Africa",
+      "status": "Unchanging",
+      "impact_on_us": "Limited",
+      "severity": 5,
+      "coordinates": {
+        "lat": 14.0,
+        "lng": 38.5
+      },
+      "description": "Fragile ceasefire holds but tensions remain high."
+    },
+    {
+      "id": 12,
+      "name": "South China Sea Tensions",
+      "region": "Asia",
+      "status": "Unchanging",
+      "impact_on_us": "Critical",
+      "severity": 6,
+      "coordinates": {
+        "lat": 12.0,
+        "lng": 115.0
+      },
+      "description": "China vs Philippines standoffs at disputed reefs."
+    },
+    {
+      "id": 13,
+      "name": "Lebanon Instability",
+      "region": "Middle East",
+      "status": "Worsening",
+      "impact_on_us": "Significant",
+      "severity": 6,
+      "coordinates": {
+        "lat": 33.9,
+        "lng": 35.5
+      },
+      "description": "Post-war reconstruction stalled, Hezbollah weakened."
+    },
+    {
+      "id": 14,
+      "name": "Haiti Gang Crisis",
+      "region": "Americas",
+      "status": "Worsening",
+      "impact_on_us": "Significant",
+      "severity": 7,
+      "coordinates": {
+        "lat": 18.9,
+        "lng": -72.3
+      },
+      "description": "Gang coalitions control most of Port-au-Prince."
+    },
+    {
+      "id": 15,
+      "name": "Venezuela Crisis",
+      "region": "Americas",
+      "status": "Unchanging",
+      "impact_on_us": "Significant",
+      "severity": 5,
+      "coordinates": {
+        "lat": 8.0,
+        "lng": -66.0
+      },
+      "description": "Political and economic crisis with mass migration continuing."
+    }
+  ],
   "metadata": {
-    "last_refresh": "2026-03-21T22:51:20.763134"
+    "last_refresh": "2026-03-22T16:17:59.421247"
   }
 }

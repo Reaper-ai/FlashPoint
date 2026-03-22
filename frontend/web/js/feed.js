@@ -1,5 +1,5 @@
 /**
- * feed.js - Real-time event feed via SSE
+ * feed.js - Optimized real-time event feed via SSE
  */
 
 import { API_BASE, ENDPOINTS, biasClass, escapeHTML } from './utils.js';
@@ -7,6 +7,8 @@ import { updateMapHotspot } from './map.js';
 
 let feedItems = [];
 let eventSource = null;
+const pendingCards = [];
+let renderScheduled = false;
 
 /**
  * Build a feed card DOM element
@@ -28,29 +30,96 @@ function buildFeedCard(item, isNew = false) {
 }
 
 /**
- * Prepend new event card to feed (newest at top)
+ * Batch render pending cards using requestAnimationFrame
  */
-function prependFeedCard(item) {
+function scheduleBatchRender() {
+    if (renderScheduled || pendingCards.length === 0) return;
+
+    renderScheduled = true;
+    requestAnimationFrame(() => {
+        renderPendingCards();
+        renderScheduled = false;
+    });
+}
+
+/**
+ * Render all pending cards in one batch
+ */
+function renderPendingCards() {
+    if (pendingCards.length === 0) return;
+
     const container = document.getElementById("feed-container");
     if (!container) return;
 
-    // Remove placeholder if present
-    const ph = container.querySelector(".feed-placeholder");
-    if (ph) ph.remove();
+    const fragment = document.createDocumentFragment();
+    const batch = pendingCards.splice(0, 10); // Process max 10 at a time
 
-    const card = buildFeedCard(item, true);
-    container.insertBefore(card, container.firstChild);
+    batch.forEach(item => {
+        const card = buildFeedCard(item, true);
+        fragment.appendChild(card);
+        feedItems.unshift(item);
 
-    // Trigger slide-in animation
-    setTimeout(() => card.classList.remove("feed-card--new"), 10);
+        // Update map with retry logic
+        if (item.lat && item.lon) {
+            waitForMapAndRenderHotspot(item);
+        }
+    });
+
+    // Add all cards at once
+    if (container.firstChild) {
+        container.insertBefore(fragment, container.firstChild);
+    } else {
+        container.appendChild(fragment);
+    }
 
     // Limit displayed cards to 100
     const cards = container.querySelectorAll(".cyber-card");
     if (cards.length > 100) {
-        cards[cards.length - 1].remove();
+        for (let i = 100; i < cards.length; i++) {
+            cards[i].remove();
+        }
     }
 
-    feedItems.unshift(item);
+    // If more pending, schedule next batch
+    if (pendingCards.length > 0) {
+        scheduleBatchRender();
+    }
+}
+
+/**
+ * Queue new event card for batch rendering
+ */
+function queueFeedCard(item) {
+    pendingCards.push(item);
+    scheduleBatchRender();
+}
+
+/**
+ * Wait for map and render hotspot with retry logic
+ */
+function waitForMapAndRenderHotspot(item) {
+    const maxAttempts = 10;
+    let attempts = 0;
+
+    function tryRender() {
+        attempts++;
+        const { map, hotspotLayer } = window.FlashPointMap || {};
+
+        if (map && hotspotLayer) {
+            console.log("📍 Map and hotspot layer ready, rendering hotspot marker...");
+            updateMapHotspot(item);
+            return;
+        }
+
+        if (attempts < maxAttempts) {
+            console.log(`📍 Map/hotspot layer not ready, attempt ${attempts}/${maxAttempts}`);
+            setTimeout(tryRender, 500);
+        } else {
+            console.error("❌ Failed to render hotspot - map/hotspot layer not ready");
+        }
+    }
+
+    tryRender();
 }
 
 /**
@@ -74,6 +143,11 @@ async function loadInitialEvents() {
             const card = buildFeedCard(event);
             container.appendChild(card);
             feedItems.push(event);
+
+            // Update map hotspot for initial events with retry logic
+            if (event.lat && event.lon) {
+                waitForMapAndRenderHotspot(event);
+            }
         });
 
         console.log(`✅ Loaded ${data.count} initial events`);
@@ -107,19 +181,17 @@ function connectSSE() {
     eventSource.onmessage = (e) => {
         try {
             const data = JSON.parse(e.data);
-            
-            // Ignore initial snapshot (already loaded via REST)
+
+            // Ignore duplicates
             if (feedItems.some(item => item.id === data.id)) {
                 return;
             }
 
-            prependFeedCard(data);
-            
-            // Update map hotspot
-            updateMapHotspot(data);
-            
+            // Queue for batch rendering
+            queueFeedCard(data);
+
         } catch (err) {
-            console.error("SSE parse error:", err, e.data);
+            console.error("SSE parse error:", err);
         }
     };
 
